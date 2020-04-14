@@ -28,14 +28,14 @@ interface Column
      *
      * @return array
      */
-    public function info(): array;
+    public function infoDataColumn(): array;
 
     /**
      * eps欄位
      *
      * @return array
      */
-    public function eps(): array;
+    public function epsDataColumn(): array;
 
     /**
      * 關鍵分點買賣欄位

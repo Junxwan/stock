@@ -2,6 +2,7 @@
 
 namespace App\Service;
 
+use App\Exceptions\StockException;
 use Carbon\Carbon;
 use Illuminate\Console\Concerns\InteractsWithIO;
 use Illuminate\Console\OutputStyle;
@@ -92,6 +93,10 @@ class Data
      * @param string $date
      * @param string $path
      * @param string $key
+     *
+     * @throws \Illuminate\Contracts\Container\BindingResolutionException
+     * @throws \PhpOffice\PhpSpreadsheet\Exception
+     * @throws \PhpOffice\PhpSpreadsheet\Reader\Exception
      */
     public function __construct(string $date, string $path, string $key = "")
     {
@@ -110,6 +115,9 @@ class Data
 
     /**
      * 讀取資料
+     *
+     * @throws \PhpOffice\PhpSpreadsheet\Exception
+     * @throws \PhpOffice\PhpSpreadsheet\Reader\Exception
      */
     private function read()
     {
@@ -141,6 +149,10 @@ class Data
 
             $this->mainKey = $this->readMainKey($this->key, $this->main);
             $this->info("map main key list.....");
+        } catch (StockException $e) {
+            Log::error("code: " . $e->getCode() . ' ' . $e->getMessage());
+            Log::error($e->getTraceAsString());
+            $this->error($e->getTraceAsString());
         } catch (\Exception $e) {
             Log::error($e->getMessage());
             Log::error($e->getTraceAsString());
@@ -245,84 +257,98 @@ class Data
      * 41 自營商成本
      * 42 現股當沖交易量
      * 43 資卷當沖交易量
-     * 44 日成交均量
+     * 44 20日成交均量
+     * 45 當日外資買賣超
+     * 46 當日投信買賣超
+     * 47 當日自營商買賣超
      *
      * 當日行情
      *
      * @return Collection
-     * @throws \PhpOffice\PhpSpreadsheet\Reader\Exception
+     * @throws StockException
      * @throws \PhpOffice\PhpSpreadsheet\Exception
+     * @throws \PhpOffice\PhpSpreadsheet\Reader\Exception
      */
     private function readPrice()
     {
         $spreadsheet = IOFactory::load($this->pricePath);
         $data = $spreadsheet->getActiveSheet()->toArray();
         unset($data[0]);
+        $code = '';
 
-        foreach ($data as $item) {
-            if ($item[28] == 0 || $item[23] == 0) {
-                continue;
+        try {
+            foreach ($data as $i => $item) {
+                $code = $item[0];
+
+                if ($item[28] == 0 || $item[23] == 0) {
+                    continue;
+                }
+
+                $rank = $this->rank($item[23], $item[25], $item[27], $item[3]);
+
+                $dang_chong = (int)$item[42] + (int)$item[43];
+                $volume = floor($item[35] / 1000);
+                $volume_20 = (int)$item[44];
+                $dangchongbi = 0;
+                $volume_20_multiple = 0;
+
+                if ($dang_chong != 0 && $volume != 0) {
+                    $dangchongbi = ($dang_chong / $volume) * 100;
+                }
+
+                if ($volume != 0 && $volume_20 != 0) {
+                    $volume_20_multiple = $volume / $volume_20;
+                }
+
+                $res[] = [
+                    'code' => $item[0],
+                    'name' => $item[1],
+                    'increase' => $item[4],
+                    'year_stray' => round($item[7]),
+                    'season_stray' => round($item[8]),
+                    'month_stray' => round($item[9]),
+                    'high_stray' => round($item[12]),
+                    'low_stray' => round($item[13]),
+                    'yoy' => round($item[14]),
+                    'mom' => round($item[15]),
+                    'financing_maintenance' => round($item[16]),
+                    'financing_use' => round($item[17]),
+                    'net_worth' => $item[18],
+                    "main_1" => round($item[19]),
+                    "main_5" => round($item[20]),
+                    "main_10" => round($item[21]),
+                    "main_20" => round($item[22]),
+                    "bb_top_Slope" => $this->countSlopeNum($item[23], $item[24]),
+                    "bb_below_Slope" => $this->countSlopeNum($item[25], $item[26]),
+                    "month_Slope" => $this->countSlopeNum($item[27], $item[28]),
+                    'bandwidth' => round((($item[23] / $item[25]) - 1) * 100),
+                    'rank' => $rank->value,
+                    'rank_direction' => $rank->direction,
+                    'top_diff_lie' => $rank->topDiffLie,
+                    'below_diff_lie' => $rank->belowDiffLie,
+                    'securities_ratio' => $item[29],
+                    'compulsory_replenishment_day' => $item[34] == '' ? '' : $this->createFromFormat($item[34]),
+                    'main_buy_n' => $item[30],
+                    'trust_buy_n' => $item[31],
+                    'foreign_investment_buy_n' => $item[32],
+                    'self_employed_buy_n' => $item[33],
+                    'volume' => $volume,
+                    'turnover' => $item[36],
+                    'share_capital' => round($item[37] / 100000),
+                    'main_cost' => $item[38],
+                    'trust_cost' => $item[39],
+                    'foreign_investment_cost' => $item[40],
+                    'self_employed_cost' => $item[41],
+                    'dangchongbi' => $dangchongbi,
+                    'volume_20' => $volume_20,
+                    'volume_20_multiple' => round($volume_20_multiple, 1),
+                    'foreign_investment_ratio' => $item[45] == '' ? 0 : round(($this->formatInt($item[45]) / $volume) * 100),
+                    'credit_ratio' => $item[46] == '' ? 0 : round(($this->formatInt($item[46]) / $volume) * 100),
+                    'self_employed_ratio' => $item[47] == '' ? 0 : round(($this->formatInt($item[47]) / $volume) * 100),
+                ];
             }
-
-            $rank = $this->rank($item[23], $item[25], $item[27], $item[3]);
-
-            $dang_chong = (int)$item[42] + (int)$item[43];
-            $volume = floor($item[35] / 1000);
-            $volume_20 = (int)$item[44];
-            $dangchongbi = 0;
-            $volume_20_multiple = 0;
-
-            if ($dang_chong != 0 && $volume != 0) {
-                $dangchongbi = ($dang_chong / $volume) * 100;
-            }
-
-            if ($volume != 0 && $volume_20 != 0) {
-                $volume_20_multiple = $volume / $volume_20;
-            }
-
-            $res[] = [
-                'code' => $item[0],
-                'name' => $item[1],
-                'increase' => $item[4],
-                'year_stray' => round($item[7]),
-                'season_stray' => round($item[8]),
-                'month_stray' => round($item[9]),
-                'high_stray' => round($item[12]),
-                'low_stray' => round($item[13]),
-                'yoy' => round($item[14]),
-                'mom' => round($item[15]),
-                'financing_maintenance' => round($item[16]),
-                'financing_use' => round($item[17]),
-                'net_worth' => $item[18],
-                "main_1" => round($item[19]),
-                "main_5" => round($item[20]),
-                "main_10" => round($item[21]),
-                "main_20" => round($item[22]),
-                "bb_top_Slope" => $this->countSlopeNum($item[23], $item[24]),
-                "bb_below_Slope" => $this->countSlopeNum($item[25], $item[26]),
-                "month_Slope" => $this->countSlopeNum($item[27], $item[28]),
-                'bandwidth' => round((($item[23] / $item[25]) - 1) * 100),
-                'rank' => $rank->value,
-                'rank_direction' => $rank->direction,
-                'top_diff_lie' => $rank->topDiffLie,
-                'below_diff_lie' => $rank->belowDiffLie,
-                'securities_ratio' => $item[29],
-                'compulsory_replenishment_day' => $item[34] == '' ? '' : $this->createFromFormat($item[34]),
-                'main_buy_n' => $item[30],
-                'trust_buy_n' => $item[31],
-                'foreign_investment_buy_n' => $item[32],
-                'self_employed_buy_n' => $item[33],
-                'volume' => $volume,
-                'turnover' => $item[36],
-                'share_capital' => round($item[37] / 100000),
-                'main_cost' => $item[38],
-                'trust_cost' => $item[39],
-                'foreign_investment_cost' => $item[40],
-                'self_employed_cost' => $item[41],
-                'dangchongbi' => $dangchongbi,
-                'volume_20' => $volume_20,
-                'volume_20_multiple' => round($volume_20_multiple, 1),
-            ];
+        } catch (\Exception $e) {
+            throw new StockException($e, $code);
         }
 
         return new Collection(isset($res) ? $res : []);
@@ -435,10 +461,10 @@ class Data
     {
         $rank = new \stdClass();
 
-        if ($month == $price) {
-            $rank->value = 0;
-            $rank->direction = 0;
-        }
+        $rank->value = 0;
+        $rank->direction = 0;
+        $rank->topDiffLie = 0;
+        $rank->belowDiffLie = 0;
 
         if ($month < $price) {
             $rank->direction = 1;
@@ -450,9 +476,11 @@ class Data
             $width = $month - $below;
         }
 
-        $rank->value = floor(($width - $diff) / ($width / 10)) * $rank->direction;
-        $rank->topDiffLie = round((($top / $price) - 1) * 100, 1);
-        $rank->belowDiffLie = round((($below / $price) - 1) * 100, 1);
+        if ($diff > 0) {
+            $rank->value = floor(($width - $diff) / ($width / 10)) * $rank->direction;
+            $rank->topDiffLie = round((($top / $price) - 1) * 100, 1);
+            $rank->belowDiffLie = round((($below / $price) - 1) * 100, 1);
+        }
 
         return $rank;
     }
@@ -494,6 +522,16 @@ class Data
             return $t->format("Y-m-d");
         }
         return '';
+    }
+
+    /**
+     * @param $value
+     *
+     * @return int
+     */
+    private function formatInt($value)
+    {
+        return $value == "" ? 0 : $value;
     }
 
     /**

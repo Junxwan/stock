@@ -4,11 +4,11 @@ namespace App\Service\Key;
 
 use App\Service\Style;
 use PhpOffice\PhpSpreadsheet\Style\Style as StyleColumn;
-use App\Service\X;
+use App\Service\Xlsx;
 use Illuminate\Support\Collection;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 
-class Write extends X
+class Write extends Xlsx
 {
     /**
      * @param Column|mixed $sheet
@@ -33,11 +33,11 @@ class Write extends X
             $this->cellValue($sheet, $worksheet->getCell($k . $index), $v);
         }
 
-        foreach ($sheet->info() as $k => $v) {
+        foreach ($sheet->infoDataColumn() as $k => $v) {
             $this->cellValue($sheet, $worksheet->getCell($k . $index), $price->get($v, 0));
         }
 
-        foreach ($sheet->eps() as $k => $v) {
+        foreach ($sheet->epsDataColumn() as $k => $v) {
             $this->cellValue($sheet, $worksheet->getCell($k . $index), $eps->get($v, 0));
         }
     }

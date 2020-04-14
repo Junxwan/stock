@@ -88,7 +88,7 @@ class All implements Sheet, Column
     /**
      * @return array
      */
-    public function info(): array
+    public function infoDataColumn(): array
     {
         return [
             'F' => 'month_Slope',
@@ -112,30 +112,33 @@ class All implements Sheet, Column
             'U' => 'foreign_investment_buy_n',
             'V' => 'trust_buy_n',
             'W' => 'self_employed_buy_n',
-            'X' => 'yoy',
-            'Y' => 'mom',
-            'Z' => 'financing_maintenance',
-            'AA' => 'financing_use',
-            'AB' => 'net_worth',
-            'AC' => 'securities_ratio',
-            'AE' => 'volume_20_multiple',
-            'AD' => 'compulsory_replenishment_day',
+            'X' => 'foreign_investment_ratio',
+            'Y' => 'credit_ratio',
+            'Z' => 'self_employed_ratio',
+            'AA' => 'yoy',
+            'AB' => 'mom',
+            'AC' => 'financing_maintenance',
+            'AD' => 'financing_use',
+            'AE' => 'net_worth',
+            'AF' => 'securities_ratio',
+            'AH' => 'volume_20_multiple',
+            'AG' => 'compulsory_replenishment_day',
         ];
     }
 
     /**
      * @return array
      */
-    public function eps(): array
+    public function epsDataColumn(): array
     {
         return [
-            'AF' => '',
-            'AG' => '',
-            'AH' => '',
             'AI' => '',
             'AJ' => '',
             'AK' => '',
             'AL' => '',
+            'AM' => '',
+            'AN' => '',
+            'AO' => '',
         ];
     }
 
@@ -144,7 +147,8 @@ class All implements Sheet, Column
      */
     public function gets(): array
     {
-        // 漲幅 位階 主1 主5 主10 主20 年乖 月乖 週乖 離低 yoy mom 離上通% 離下通% 主力連N買 外資連N買 投信連N買 自營商連N買
+        // 漲幅 位階 主1 主5 主10 主20 年乖 月乖 週乖 離低 離上通% 離下通% 主力連N買 外資連N買 投信連N買 自營商連N買 yoy mom 外資%
+        // 投信% 自營商%
         return [
             'C',
             'D',
@@ -157,8 +161,6 @@ class All implements Sheet, Column
             'Q',
             "S",
             'T',
-            'X',
-            'Y',
             'U',
             'I',
             'J',
@@ -166,6 +168,11 @@ class All implements Sheet, Column
             'U',
             'V',
             'W',
+            'AA',
+            'AB',
+            'X',
+            'Y',
+            'Z',
         ];
     }
 
@@ -190,7 +197,7 @@ class All implements Sheet, Column
      */
     public function financingMaintenance(): string
     {
-        return 'Z';
+        return 'AC';
     }
 
     /**
@@ -198,7 +205,7 @@ class All implements Sheet, Column
      */
     public function financingUse(): string
     {
-        return 'AA';
+        return 'AD';
     }
 
     /**
@@ -206,7 +213,7 @@ class All implements Sheet, Column
      */
     public function netWorth(): string
     {
-        return 'AB';
+        return 'AE';
     }
 
     /**
@@ -234,7 +241,7 @@ class All implements Sheet, Column
      */
     public function securitiesRatio(): string
     {
-        return 'AC';
+        return 'AF';
     }
 
     /**
@@ -242,7 +249,7 @@ class All implements Sheet, Column
      */
     public function date(): array
     {
-        return ['AD', 'AL'];
+        return ['AG', 'AO'];
     }
 
     /**
@@ -250,7 +257,7 @@ class All implements Sheet, Column
      */
     public function volume20Multiple(): string
     {
-        return 'AE';
+        return 'AH';
     }
 
     /**

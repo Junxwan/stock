@@ -92,7 +92,7 @@ abstract class KeyMain implements Sheet, Column
     /**
      * @return array
      */
-    public function info(): array
+    public function infoDataColumn(): array
     {
         return [
             'G' => 'month_Slope',
@@ -116,30 +116,33 @@ abstract class KeyMain implements Sheet, Column
             'V' => 'foreign_investment_buy_n',
             'W' => 'trust_buy_n',
             'X' => 'self_employed_buy_n',
-            'Y' => 'yoy',
-            'Z' => 'mom',
-            'AA' => 'financing_maintenance',
-            'AB' => 'financing_use',
-            'AC' => 'net_worth',
-            'AD' => 'securities_ratio',
-            'AE' => 'compulsory_replenishment_day',
-            'AF' => 'volume_20_multiple',
+            'Y' => 'foreign_investment_ratio',
+            'Z' => 'credit_ratio',
+            'AA' => 'self_employed_ratio',
+            'AB' => 'yoy',
+            'AC' => 'mom',
+            'AD' => 'financing_maintenance',
+            'AE' => 'financing_use',
+            'AF' => 'net_worth',
+            'AG' => 'securities_ratio',
+            'AH' => 'compulsory_replenishment_day',
+            'AI' => 'volume_20_multiple',
         ];
     }
 
     /**
      * @return array
      */
-    public function eps(): array
+    public function epsDataColumn(): array
     {
         return [
-            'AG' => '',
-            'AH' => '',
-            'AI' => '',
             'AJ' => '',
             'AK' => '',
             'AL' => '',
             'AM' => '',
+            'AN' => '',
+            'AO' => '',
+            'AP' => '',
         ];
     }
 
@@ -148,8 +151,8 @@ abstract class KeyMain implements Sheet, Column
      */
     public function gets(): array
     {
-        // 漲幅 位階 主1 主5 主10 主20 年乖 月乖 週乖 離低 主力N 外資N 投信N 自營商N yoy mom 離上通% 離下通%
-        return ['D', 'E', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', 'J', 'K'];
+        // 漲幅 位階 主1 主5 主10 主20 年乖 月乖 週乖 離低 主力N 外資N 投信N 自營商N yoy mom 離上通% 離下通% 外資% 投信% 自營商%
+        return ['D', 'E', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'T', 'U', 'V', 'W', 'X', 'AB', 'AC', 'J', 'K', 'Y', 'Z', 'AA'];
     }
 
     /**
@@ -173,7 +176,7 @@ abstract class KeyMain implements Sheet, Column
      */
     public function financingMaintenance(): string
     {
-        return 'AA';
+        return 'AD';
     }
 
     /**
@@ -181,7 +184,7 @@ abstract class KeyMain implements Sheet, Column
      */
     public function financingUse(): string
     {
-        return 'AB';
+        return 'AE';
     }
 
     /**
@@ -189,7 +192,7 @@ abstract class KeyMain implements Sheet, Column
      */
     public function netWorth(): string
     {
-        return 'AC';
+        return 'AF';
     }
 
     /**
@@ -214,7 +217,7 @@ abstract class KeyMain implements Sheet, Column
      */
     public function securitiesRatio(): string
     {
-        return 'AD';
+        return 'AG';
     }
 
     /**
@@ -222,7 +225,7 @@ abstract class KeyMain implements Sheet, Column
      */
     public function date(): array
     {
-        return ['AE', 'AM'];
+        return ['AH', 'AP'];
     }
 
     /**
@@ -231,6 +234,6 @@ abstract class KeyMain implements Sheet, Column
      */
     public function volume20Multiple(): string
     {
-        return 'AF';
+        return 'AI';
     }
 }

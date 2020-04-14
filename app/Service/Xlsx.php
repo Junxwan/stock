@@ -2,6 +2,7 @@
 
 namespace App\Service;
 
+use App\Exceptions\StockException;
 use Carbon\Carbon;
 use Illuminate\Console\Concerns\InteractsWithIO;
 use Illuminate\Console\OutputStyle;
@@ -10,11 +11,13 @@ use Illuminate\Support\Facades\Log;
 use PhpOffice\PhpSpreadsheet\Cell\Cell;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Style\Style as StyleColumn;
+use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx as Writer;
 use Symfony\Component\Console\Input\ArgvInput;
 use Symfony\Component\Console\Output\ConsoleOutput;
 
-class Xlsx
+abstract class Xlsx
 {
     use InteractsWithIO;
 
@@ -26,29 +29,22 @@ class Xlsx
     /**
      * @var Collection
      */
-    private $price;
+    protected $price;
 
     /**
      * @var Collection
      */
-    private $futures;
+    protected $futures;
 
     /**
      * @var Collection
      */
-    private $highEndShipping;
+    protected $highEndShipping;
 
     /**
      * @var Collection
      */
-    private $eps;
-
-    /**
-     * 普通欄位
-     *
-     * @var array
-     */
-    protected $column = [];
+    protected $eps;
 
     /**
      * Xlsx constructor.
@@ -81,6 +77,10 @@ class Xlsx
         try {
             $writer = new Writer($this->createSpreadsheet($sheets, $example));
             $writer->save($file);
+        } catch (StockException $e) {
+            Log::error('code: ' . $e->getCode() . ' ' . $e->getMessage());
+            Log::error($e->getTraceAsString());
+            $this->error($e->getTraceAsString());
         } catch (\Exception $e) {
             Log::error($e->getTraceAsString());
             $this->error($e->getTraceAsString());
@@ -93,7 +93,8 @@ class Xlsx
      * @param array $sheets
      * @param string $example
      *
-     * @return \PhpOffice\PhpSpreadsheet\Spreadsheet
+     * @return Spreadsheet
+     * @throws StockException
      * @throws \PhpOffice\PhpSpreadsheet\Exception
      * @throws \PhpOffice\PhpSpreadsheet\Reader\Exception
      */
@@ -118,154 +119,95 @@ class Xlsx
      * @param Spreadsheet $spreadsheet
      * @param Sheet $sheet
      *
+     * @throws StockException
      * @throws \PhpOffice\PhpSpreadsheet\Exception
      */
     private function putSheet(Spreadsheet $spreadsheet, Sheet $sheet)
     {
         $index = 1;
 
-        $s = $spreadsheet->getSheet($sheet->index());
+        $worksheet = $spreadsheet->getSheet($sheet->index());
 
-        $type = ['buy' => 0, 'sell' => 1, 'all' => 2];
+        try {
+            $code = '';
+            foreach ($sheet->getData() as $i => $value) {
+                $code = $value["code"];
 
-        foreach ($sheet->getData() as $i => $value) {
-            $p = collect($this->price->where("code", $value["code"])->first());
-            $a = collect($this->dangchong->where("code", $value["code"])->first());
-            $o = collect($this->old->where("code", $value["code"])->where("type", $type[$sheet->type()])->first());
-            $e = collect($this->eps->where("code", $value["code"])->first());
-            $h = collect($this->highEndShipping->where("code", $value["code"])->first());
+                $p = collect($this->price->where("code", $value["code"])->first());
+                $e = collect($this->eps->where("code", $value["code"])->first());
 
-            if ($p->isEmpty()) {
-                continue;
+                if ($p->isEmpty()) {
+                    continue;
+                }
+
+                if (! $sheet->check($p, $e, $value)) {
+                    continue;
+                }
+
+                $index++;
+
+                $this->cellColumnValue($sheet, $worksheet, $index, $p, $e, $value);
+
+
+                if ($index % $sheet->outNum() == 0) {
+                    $this->info($index);
+                }
             }
 
-            if (! $sheet->check($p, $e, $a, $o, $h, $value)) {
-                continue;
-            }
-
-            $index++;
-
-            foreach ($sheet->data($p, $a, $o, $value) as $k => $v) {
-                $this->cellValue($sheet, $s->getCell($k . $index), $v);
-            }
-
-            foreach ($sheet->info() as $k => $v) {
-                $this->cellValue($sheet, $s->getCell($k . $index), $p->get($v, 0));
-            }
-
-            foreach ($sheet->getEpsKeyMap() as $k => $v) {
-                $this->cellValue($sheet, $s->getCell($k . $index), $e->get($v, 0));
-            }
-
-            foreach ($sheet->main() as $k => $v) {
-                $this->cellValue($sheet, $s->getCell($k . $index), $a->get($v, 0));
-            }
-
-            if ($index % $sheet->outNum() == 0) {
-                $this->info($index);
-            }
+        } catch (\Exception $e) {
+            throw new StockException($e, $code);
         }
 
-        $sheet->putOther($s, $index);
+        $sheet->putOther($worksheet, $index);
     }
+
+    /**
+     * @param mixed $sheet
+     * @param Worksheet $worksheet
+     * @param int $index
+     * @param Collection $price
+     * @param Collection $eps
+     * @param mixed $value
+     *
+     * @return mixed
+     */
+    abstract protected function cellColumnValue(
+        $sheet,
+        Worksheet $worksheet,
+        int $index,
+        Collection $price,
+        Collection $eps,
+        $value
+    );
 
     /**
      * 設定資料
      *
-     * @param Sheet $sheet
+     * @param mixed $sheet
+     * @param StyleColumn $style
+     * @param string $column
+     * @param mixed $value
+     */
+    abstract protected function cellStyle($sheet, StyleColumn $style, string $column, $value);
+
+    /**
+     * 設定資料
+     *
+     * @param mixed $sheet
      * @param Cell $cell
      * @param mixed $value
      *
      * @throws \PhpOffice\PhpSpreadsheet\Exception
      */
-    protected function cellValue(Sheet $sheet, Cell $cell, $value)
+    protected function cellValue($sheet, Cell $cell, $value)
     {
         $cell->setValue($value);
         $style = $cell->getStyle();
         $column = $cell->getColumn();
-
-        if ($column == 'A') {
-            if ($this->futures->where('code', $value)->isNotEmpty()) {
-                $style->getFont()->getColor()->setRGB("974706");
-            }
-        }
-
-        $columnStyleKey = array_merge(
-            $sheet->gets(),
-            $sheet->slope(),
-            [$sheet->bandwidth()]
-        );
-
-        if (in_array($column, $columnStyleKey)) {
-            if ($value > 0) {
-                Style::setStyleRed($style);
-            }
-            if ($value < 0) {
-                Style::setStyleGreen($style);
-            }
-        }
-
-        if ($column == $sheet->mainKey()) {
-            if ($sheet->type() == "buy") {
-                Style::setStyleRed($style);
-            }
-            if ($sheet->type() == "sell") {
-                Style::setStyleGreen($style);
-            }
-        }
-
-        if ($column == $sheet->bandwidth()) {
-            if ($value >= 20) {
-                Style::setStyleDeepRed($style);
-            } elseif ($value >= 1 && $value <= 5) {
-                Style::setStyleDeepGreen($style);
-            }
-        }
-
-        if (in_array($column, $sheet->slope())) {
-            if ($value >= 1) {
-                Style::setStyleDeepRed($style);
-            } elseif ($value <= -1) {
-                Style::setStyleDeepGreen($style);
-            }
-        }
-
-        if ($column == $sheet->highStray()) {
-            if ($value >= 50) {
-                Style::setStyleRed($style);
-            } else {
-                Style::setStyleGreen($style);
-            }
-        }
-
-        if ($column == $sheet->financingMaintenance() && $value <= 130) {
-            Style::setStyleGreen($style);
-        }
-
-        if ($column == $sheet->financingUse() && $value >= 10) {
-            Style::setStyleRed($style);
-        }
-
-        if ($column == $sheet->netWorth() && $value <= 0.5) {
-            Style::setStyleGreen($style);
-        }
-
-        if ($column == $sheet->securitiesRatio() && $value >= 25) {
-            Style::setStyleDeepRed($style);
-        }
-
-        if (in_array($column, $sheet->date())) {
-            if ($value != '' && $this->is10Day($value)) {
-                Style::setStyleDeepRed($style);
-            }
-        }
-
-        if ($column == $sheet->volume20Multiple() && $value >= 2) {
-            Style::setStyleDeepRed($style);
-        }
-
+        $this->cellStyle($sheet, $style, $column, $value);
         $style->getFont()->setBold(16);
     }
+
 
     /**
      * 日期是否剩下10天內
@@ -274,7 +216,7 @@ class Xlsx
      *
      * @return bool
      */
-    private function is10Day(string $value): bool
+    protected function is10Day(string $value): bool
     {
         $date = Carbon::createFromFormat('Y-m-d', $value);
         $now = Carbon::now();

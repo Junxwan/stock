@@ -39,6 +39,10 @@ class Price
      *
      * @param string $path
      * @param string $date
+     *
+     * @throws \Illuminate\Contracts\Container\BindingResolutionException
+     * @throws \PhpOffice\PhpSpreadsheet\Exception
+     * @throws \PhpOffice\PhpSpreadsheet\Reader\Exception
      */
     public function __construct(string $path, string $date)
     {
@@ -54,13 +58,15 @@ class Price
         $this->output = app()->make(
             OutputStyle::class, ['input' => new ArgvInput(), 'output' => new ConsoleOutput()]
         );
+
+        $this->read();
     }
 
     /**
      * @throws \PhpOffice\PhpSpreadsheet\Exception
      * @throws \PhpOffice\PhpSpreadsheet\Reader\Exception
      */
-    public function read()
+    private function read()
     {
         foreach ($this->pricePath as $key => $path) {
             if (! File::exists($path)) {
@@ -110,7 +116,7 @@ class Price
     /**
      * @return Collection
      */
-    public function getPrice(): Collection
+    public function getData(): Collection
     {
         return $this->price;
     }
