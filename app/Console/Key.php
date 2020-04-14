@@ -6,6 +6,7 @@ namespace App\Console;
 use App\Service\Data;
 use App\Service\Key\All;
 use App\Service\Key\Buy;
+use App\Service\Key\HighEndShipping;
 use App\Service\Key\Sell;
 use App\Service\Key\Write;
 use Exception;
@@ -34,6 +35,7 @@ class Key extends Command
                 new Buy($data),
                 new Sell($data),
                 new All($data),
+                new HighEndShipping($data),
             ], $data->getResultPath() . '\\' . $date . '.xlsx', $data->getResultPath() . '\example.xlsx');
         } catch (Exception $e) {
             Log::error($e->getMessage());
