@@ -33,13 +33,11 @@ interface Sheet
     /**
      * 檢查資料
      *
-     * @param Collection $price
-     * @param Collection $eps
      * @param array $value
      *
      * @return bool
      */
-    public function check(Collection $price, Collection $eps, array $value): bool;
+    public function check(array $value): bool;
 
     /**
      * 種類

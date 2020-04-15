@@ -38,17 +38,12 @@ abstract class KeyMain implements Sheet, Column
     }
 
     /**
-     * @param Collection $price
-     * @param Collection $eps
      * @param array $value
      *
      * @return bool
      */
-    public function check(
-        Collection $price,
-        Collection $eps,
-        array $value
-    ): bool {
+    public function check(array $value): bool
+    {
         return ! empty($value[$this->type()]);
     }
 
