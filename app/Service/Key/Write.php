@@ -2,7 +2,11 @@
 
 namespace App\Service\Key;
 
+use App\Exceptions\StockException;
+use App\Service\Data;
+use App\Service\Sheet;
 use App\Service\Style;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Style\Style as StyleColumn;
 use App\Service\Xlsx;
 use Illuminate\Support\Collection;
@@ -10,6 +14,100 @@ use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 
 class Write extends Xlsx
 {
+    /**
+     * @var Collection
+     */
+    protected $price;
+
+    /**
+     * @var Collection
+     */
+    protected $futures;
+
+    /**
+     * @var Collection
+     */
+    protected $highEndShipping;
+
+    /**
+     * @var Collection
+     */
+    protected $eps;
+
+    /**
+     * @var array
+     */
+    private $columnStyles;
+
+    /**
+     * Write constructor.
+     *
+     * @param Data $data
+     *
+     * @throws \Illuminate\Contracts\Container\BindingResolutionException
+     */
+    public function __construct(Data $data)
+    {
+        $this->price = $data->getPrice();
+        $this->futures = $data->getFutures();
+        $this->eps = $data->getEps();
+
+        parent::__construct();
+    }
+
+    /**
+     * 建立所有個股分析結果名單
+     *
+     * @param Spreadsheet $spreadsheet
+     * @param Sheet $sheet
+     *
+     * @throws StockException
+     * @throws \PhpOffice\PhpSpreadsheet\Exception
+     */
+    protected function putSheet(Spreadsheet $spreadsheet, Sheet $sheet)
+    {
+        $this->columnStyles = array_merge(
+            $sheet->gets(),
+            $sheet->slope(),
+            [$sheet->bandwidth()]
+        );
+
+        $index = 1;
+
+        $worksheet = $spreadsheet->getSheet($sheet->index());
+
+        try {
+            $code = '';
+            foreach ($sheet->getData() as $i => $value) {
+                $code = $value["code"];
+
+                $p = collect($this->price->where("code", $value["code"])->first());
+                $e = collect($this->eps->where("code", $value["code"])->first());
+
+                if ($p->isEmpty()) {
+                    continue;
+                }
+
+                if (! $sheet->check($p, $e, $value)) {
+                    continue;
+                }
+
+                $index++;
+
+                $this->cellColumnValue($sheet, $worksheet, $index, $p, $e, $value);
+
+                if ($index % $sheet->outNum() == 0) {
+                    $this->info($index);
+                }
+            }
+
+        } catch (\Exception $e) {
+            throw new StockException($e, $code);
+        }
+
+        $sheet->putOther($worksheet, $index);
+    }
+
     /**
      * @param Column|mixed $sheet
      * @param Worksheet $worksheet
@@ -56,20 +154,7 @@ class Write extends Xlsx
             }
         }
 
-        $columnStyleKey = array_merge(
-            $sheet->gets(),
-            $sheet->slope(),
-            [$sheet->bandwidth()]
-        );
-
-        if (in_array($column, $columnStyleKey)) {
-            if ($value > 0) {
-                Style::setStyleRed($style);
-            }
-            if ($value < 0) {
-                Style::setStyleGreen($style);
-            }
-        }
+        $this->setColumnColor($style, $column, $this->columnStyles, $value);
 
         if ($column == $sheet->mainKey()) {
             if ($sheet->type() == "buy") {
@@ -120,11 +205,7 @@ class Write extends Xlsx
             Style::setStyleDeepRed($style);
         }
 
-        if (in_array($column, $sheet->date())) {
-            if ($value != '' && $this->is10Day($value)) {
-                Style::setStyleDeepRed($style);
-            }
-        }
+        $this->setColumnColorByDate($style, $column, $sheet->date(), $value);
 
         if ($column == $sheet->volume20Multiple() && $value >= 2) {
             Style::setStyleDeepRed($style);

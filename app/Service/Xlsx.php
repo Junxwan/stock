@@ -27,39 +27,12 @@ abstract class Xlsx
     private $spreadsheet;
 
     /**
-     * @var Collection
-     */
-    protected $price;
-
-    /**
-     * @var Collection
-     */
-    protected $futures;
-
-    /**
-     * @var Collection
-     */
-    protected $highEndShipping;
-
-    /**
-     * @var Collection
-     */
-    protected $eps;
-
-    /**
      * Xlsx constructor.
-     *
-     * @param Data $data
      *
      * @throws \Illuminate\Contracts\Container\BindingResolutionException
      */
-    public function __construct(Data $data)
+    public function __construct()
     {
-        $this->price = $data->getPrice();
-        $this->futures = $data->getFutures();
-        $this->highEndShipping = $data->getHighEndShipping();
-        $this->eps = $data->getEps();
-
         $this->output = app()->make(
             OutputStyle::class, ['input' => new ArgvInput(), 'output' => new ConsoleOutput()]
         );
@@ -122,44 +95,7 @@ abstract class Xlsx
      * @throws StockException
      * @throws \PhpOffice\PhpSpreadsheet\Exception
      */
-    private function putSheet(Spreadsheet $spreadsheet, Sheet $sheet)
-    {
-        $index = 1;
-
-        $worksheet = $spreadsheet->getSheet($sheet->index());
-
-        try {
-            $code = '';
-            foreach ($sheet->getData() as $i => $value) {
-                $code = $value["code"];
-
-                $p = collect($this->price->where("code", $value["code"])->first());
-                $e = collect($this->eps->where("code", $value["code"])->first());
-
-                if ($p->isEmpty()) {
-                    continue;
-                }
-
-                if (! $sheet->check($p, $e, $value)) {
-                    continue;
-                }
-
-                $index++;
-
-                $this->cellColumnValue($sheet, $worksheet, $index, $p, $e, $value);
-
-
-                if ($index % $sheet->outNum() == 0) {
-                    $this->info($index);
-                }
-            }
-
-        } catch (\Exception $e) {
-            throw new StockException($e, $code);
-        }
-
-        $sheet->putOther($worksheet, $index);
-    }
+    protected abstract function putSheet(Spreadsheet $spreadsheet, Sheet $sheet);
 
     /**
      * @param mixed $sheet
@@ -206,6 +142,39 @@ abstract class Xlsx
         $column = $cell->getColumn();
         $this->cellStyle($sheet, $style, $column, $value);
         $style->getFont()->setBold(16);
+    }
+
+    /**
+     * @param StyleColumn $style
+     * @param string $column
+     * @param array $columnStyles
+     * @param mixed $value
+     */
+    protected function setColumnColor(StyleColumn $style, string $column, array $columnStyles, $value)
+    {
+        if (in_array($column, $columnStyles)) {
+            if ($value > 0) {
+                Style::setStyleRed($style);
+            }
+            if ($value < 0) {
+                Style::setStyleGreen($style);
+            }
+        }
+    }
+
+    /**
+     * @param StyleColumn $style
+     * @param string $column
+     * @param array $columnStyles
+     * @param $value
+     */
+    public function setColumnColorByDate(StyleColumn $style, string $column, array $columnStyles, $value)
+    {
+        if (in_array($column, $columnStyles)) {
+            if ($value != '' && $this->is10Day($value)) {
+                Style::setStyleDeepRed($style);
+            }
+        }
     }
 
 
