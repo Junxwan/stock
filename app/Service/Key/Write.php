@@ -27,11 +27,6 @@ class Write extends Xlsx
     /**
      * @var Collection
      */
-    protected $highEndShipping;
-
-    /**
-     * @var Collection
-     */
     protected $eps;
 
     /**
@@ -81,20 +76,13 @@ class Write extends Xlsx
             foreach ($sheet->getData() as $i => $value) {
                 $code = $value["code"];
 
-                $p = collect($this->price->where("code", $value["code"])->first());
-                $e = collect($this->eps->where("code", $value["code"])->first());
-
-                if ($p->isEmpty()) {
-                    continue;
-                }
-
-                if (! $sheet->check($p, $e, $value)) {
+                if (! $sheet->check($value)) {
                     continue;
                 }
 
                 $index++;
 
-                $this->cellColumnValue($sheet, $worksheet, $index, $p, $e, $value);
+                $this->cellColumnValue($sheet, $worksheet, $index, $value);
 
                 if ($index % $sheet->outNum() == 0) {
                     $this->info($index);
@@ -112,21 +100,20 @@ class Write extends Xlsx
      * @param Column|mixed $sheet
      * @param Worksheet $worksheet
      * @param int $index
-     * @param Collection $price
-     * @param Collection $eps
      * @param mixed $value
      *
      * @return mixed|void
      * @throws \PhpOffice\PhpSpreadsheet\Exception
      */
-    protected function cellColumnValue(
-        $sheet,
-        Worksheet $worksheet,
-        int $index,
-        Collection $price,
-        Collection $eps,
-        $value
-    ) {
+    protected function cellColumnValue($sheet, Worksheet $worksheet, int $index, $value)
+    {
+        $price = collect($this->price->where("code", $value["code"])->first());
+        $eps = collect($this->eps->where("code", $value["code"])->first());
+
+        if ($price->isEmpty()) {
+            return;
+        }
+
         foreach ($sheet->data($price, $value) as $k => $v) {
             $this->cellValue($sheet, $worksheet->getCell($k . $index), $v);
         }

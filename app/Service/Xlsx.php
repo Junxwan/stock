@@ -101,20 +101,11 @@ abstract class Xlsx
      * @param mixed $sheet
      * @param Worksheet $worksheet
      * @param int $index
-     * @param Collection $price
-     * @param Collection $eps
      * @param mixed $value
      *
      * @return mixed
      */
-    abstract protected function cellColumnValue(
-        $sheet,
-        Worksheet $worksheet,
-        int $index,
-        Collection $price,
-        Collection $eps,
-        $value
-    );
+    abstract protected function cellColumnValue($sheet, Worksheet $worksheet, int $index, $value);
 
     /**
      * 設定資料
