@@ -7,7 +7,6 @@ use Carbon\Carbon;
 use Illuminate\Console\Concerns\InteractsWithIO;
 use Illuminate\Console\OutputStyle;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Log;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use Symfony\Component\Console\Input\ArgvInput;
@@ -65,17 +64,7 @@ class Data
     /**
      * @var Collection
      */
-    private $dangchong;
-
-    /**
-     * @var Collection
-     */
     private $mainKey;
-
-    /**
-     * @var Collection
-     */
-    private $oldFile;
 
     /**
      * @var Collection
@@ -86,6 +75,11 @@ class Data
      * @var Collection
      */
     private $highEndShipping;
+
+    /**
+     * @var \PhpOffice\PhpSpreadsheet\Spreadsheet
+     */
+    private $spreadsheetExample;
 
     /**
      * Data constructor.
@@ -105,6 +99,7 @@ class Data
         $this->epsPath = $path . '\eps\eps_' . $date . '.xlsx';
         $this->resultPath = $path . '\result';
         $this->keyPath = $key;
+        $this->spreadsheetExample = IOFactory::load($this->getResultPath() . '\example.xlsx');
 
         $this->output = app()->make(
             OutputStyle::class, ['input' => new ArgvInput(), 'output' => new ConsoleOutput()]
@@ -146,9 +141,11 @@ class Data
             $this->futures = $this->readFutures();
 
             $this->highEndShipping = $this->readHighEndShipping();
+            $this->info("read high end shipping list.....");
 
             $this->mainKey = $this->readMainKey($this->key, $this->main);
-            $this->info("map main key list.....");
+            $this->info("read main key list.....");
+
         } catch (StockException $e) {
             Log::error("code: " . $e->getCode() . ' ' . $e->getMessage());
             Log::error($e->getTraceAsString());
@@ -274,7 +271,6 @@ class Data
         $spreadsheet = IOFactory::load($this->pricePath);
         $data = $spreadsheet->getActiveSheet()->toArray();
         unset($data[0]);
-        $code = '';
 
         try {
             foreach ($data as $i => $item) {
@@ -410,8 +406,7 @@ class Data
      */
     private function readFutures(): Collection
     {
-        $spreadsheet = IOFactory::load($this->getResultPath() . '\example.xlsx');
-        $data = $spreadsheet->getSheet(3)->toArray();
+        $data = $this->spreadsheetExample->getSheet(6)->toArray();
         unset($data[0]);
 
         foreach ($data as $item) {
@@ -433,11 +428,14 @@ class Data
      */
     private function readHighEndShipping(): Collection
     {
-        $spreadsheet = IOFactory::load($this->getResultPath() . '\HighEndShipping.xlsx');
-        $data = $spreadsheet->getSheet(0)->toArray();
+        $data = $this->spreadsheetExample->getSheet(3)->toArray();
         unset($data[0]);
 
         foreach ($data as $item) {
+            if ($item[0] == '') {
+                continue;
+            }
+
             $res[] = [
                 "code" => $item[0],
                 'name' => $item[1],

@@ -32,14 +32,10 @@ class HighEndShipping extends All
     }
 
     /**
-     * @param Collection $price
-     * @param Collection $eps
-     * @param array $value
-     *
-     * @return bool
+     * @return Collection
      */
-    public function check(Collection $price, Collection $eps, array $value): bool
+    public function getData(): Collection
     {
-        return $this->highEndShipping->where("code", $value["code"])->isNotEmpty();
+        return $this->highEndShipping;
     }
 }
