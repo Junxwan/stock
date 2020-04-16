@@ -61,17 +61,17 @@ class Write extends Xlsx
      */
     protected function putSheet(Spreadsheet $spreadsheet, Sheet $sheet)
     {
+        $columns = $sheet->getColumns();
         $this->columnStyles = array_merge(
-            $sheet->gets(),
-            $sheet->slope(),
-            [$sheet->bandwidth()]
+            $columns->get('style'),
+            $columns->get('slope'),
+            [$columns->get('bandwidth')]
         );
-
-        $index = 1;
 
         $worksheet = $spreadsheet->getSheet($sheet->index());
 
         try {
+            $index = 1;
             $code = '';
             foreach ($sheet->getData() as $i => $value) {
                 $code = $value["code"];
@@ -82,10 +82,14 @@ class Write extends Xlsx
 
                 $index++;
 
-                $this->cellColumnValue($sheet, $worksheet, $index, $value);
+                if (! $this->cellColumnValue($sheet, $worksheet, $index, $value)) {
+                    $index--;
+                    continue;
+                }
 
-                if ($index % $sheet->outNum() == 0) {
-                    $this->info($index);
+
+                if ($i % $sheet->outNum() == 0) {
+                    $this->info($i);
                 }
             }
 
@@ -97,44 +101,48 @@ class Write extends Xlsx
     }
 
     /**
-     * @param Column|mixed $sheet
+     * @param Sheet $sheet
      * @param Worksheet $worksheet
      * @param int $index
      * @param mixed $value
      *
-     * @return mixed|void
+     * @return bool
      * @throws \PhpOffice\PhpSpreadsheet\Exception
      */
-    protected function cellColumnValue($sheet, Worksheet $worksheet, int $index, $value)
+    protected function cellColumnValue(Sheet $sheet, Worksheet $worksheet, int $index, $value): bool
     {
         $price = collect($this->price->where("code", $value["code"])->first());
         $eps = collect($this->eps->where("code", $value["code"])->first());
 
         if ($price->isEmpty()) {
-            return;
+            return false;
         }
 
-        foreach ($sheet->data($price, $value) as $k => $v) {
+        foreach ($sheet->putData($value) as $k => $v) {
             $this->cellValue($sheet, $worksheet->getCell($k . $index), $v);
         }
 
-        foreach ($sheet->infoDataColumn() as $k => $v) {
+        foreach ($sheet->getColumns()->get('info') as $k => $v) {
             $this->cellValue($sheet, $worksheet->getCell($k . $index), $price->get($v, 0));
         }
 
-        foreach ($sheet->epsDataColumn() as $k => $v) {
+        foreach ($sheet->getColumns()->get('eps') as $k => $v) {
             $this->cellValue($sheet, $worksheet->getCell($k . $index), $eps->get($v, 0));
         }
+
+        return true;
     }
 
     /**
-     * @param Column|mixed $sheet
+     * @param Sheet $sheet
      * @param StyleColumn $style
      * @param string $column
      * @param mixed $value
      */
-    protected function cellStyle($sheet, StyleColumn $style, string $column, $value)
+    protected function cellStyle(Sheet $sheet, StyleColumn $style, string $column, $value)
     {
+        $columns = $sheet->getColumns();
+
         if ($column == 'A') {
             if ($this->futures->where('code', $value)->isNotEmpty()) {
                 $style->getFont()->getColor()->setRGB("974706");
@@ -143,7 +151,7 @@ class Write extends Xlsx
 
         $this->setColumnColor($style, $column, $this->columnStyles, $value);
 
-        if ($column == $sheet->mainKey()) {
+        if ($column == $columns['main']) {
             if ($sheet->type() == "buy") {
                 Style::setStyleRed($style);
             }
@@ -152,7 +160,7 @@ class Write extends Xlsx
             }
         }
 
-        if ($column == $sheet->bandwidth()) {
+        if ($column == $columns['bandwidth']) {
             if ($value >= 20) {
                 Style::setStyleDeepRed($style);
             } elseif ($value >= 1 && $value <= 5) {
@@ -160,7 +168,7 @@ class Write extends Xlsx
             }
         }
 
-        if (in_array($column, $sheet->slope())) {
+        if (in_array($column, $columns['slope'])) {
             if ($value >= 1) {
                 Style::setStyleDeepRed($style);
             } elseif ($value <= -1) {
@@ -168,7 +176,7 @@ class Write extends Xlsx
             }
         }
 
-        if ($column == $sheet->highStray()) {
+        if ($column == $columns['high_stray']) {
             if ($value >= 50) {
                 Style::setStyleRed($style);
             } else {
@@ -176,25 +184,25 @@ class Write extends Xlsx
             }
         }
 
-        if ($column == $sheet->financingMaintenance() && $value <= 130) {
+        if ($column == $columns['financing_maintenance'] && $value <= 130) {
             Style::setStyleGreen($style);
         }
 
-        if ($column == $sheet->financingUse() && $value >= 10) {
+        if ($column == $columns['financing_use'] && $value >= 10) {
             Style::setStyleRed($style);
         }
 
-        if ($column == $sheet->netWorth() && $value <= 0.5) {
+        if ($column == $columns['net_worth'] && $value <= 0.5) {
             Style::setStyleGreen($style);
         }
 
-        if ($column == $sheet->securitiesRatio() && $value >= 25) {
+        if ($column == $columns['securities_ratio'] && $value >= 25) {
             Style::setStyleDeepRed($style);
         }
 
-        $this->setColumnColorByDate($style, $column, $sheet->date(), $value);
+        $this->setColumnColorByDate($style, $column, $columns['date'], $value);
 
-        if ($column == $sheet->volume20Multiple() && $value >= 2) {
+        if ($column == $columns['volume_20_multiple'] && $value >= 2) {
             Style::setStyleDeepRed($style);
         }
     }

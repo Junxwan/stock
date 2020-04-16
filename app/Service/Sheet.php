@@ -8,6 +8,15 @@ use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 interface Sheet
 {
     /**
+     * 欄位資料
+     *
+     * @param array $value
+     *
+     * @return array
+     */
+    public function putData(array $value): array;
+
+    /**
      * @param Worksheet $sheet
      * @param int $index
      *
@@ -29,6 +38,13 @@ interface Sheet
      * @return Collection
      */
     public function getData(): Collection;
+
+    /**
+     * 資料欄位
+     *
+     * @return Collection
+     */
+    public function getColumns(): Collection;
 
     /**
      * 檢查資料

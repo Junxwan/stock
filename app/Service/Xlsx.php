@@ -6,7 +6,6 @@ use App\Exceptions\StockException;
 use Carbon\Carbon;
 use Illuminate\Console\Concerns\InteractsWithIO;
 use Illuminate\Console\OutputStyle;
-use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
 use PhpOffice\PhpSpreadsheet\Cell\Cell;
 use PhpOffice\PhpSpreadsheet\IOFactory;
@@ -98,24 +97,24 @@ abstract class Xlsx
     protected abstract function putSheet(Spreadsheet $spreadsheet, Sheet $sheet);
 
     /**
-     * @param mixed $sheet
+     * @param Sheet $sheet
      * @param Worksheet $worksheet
      * @param int $index
      * @param mixed $value
      *
-     * @return mixed
+     * @return bool
      */
-    abstract protected function cellColumnValue($sheet, Worksheet $worksheet, int $index, $value);
+    abstract protected function cellColumnValue(Sheet $sheet, Worksheet $worksheet, int $index, $value): bool;
 
     /**
      * 設定資料
      *
-     * @param mixed $sheet
+     * @param Sheet $sheet
      * @param StyleColumn $style
      * @param string $column
      * @param mixed $value
      */
-    abstract protected function cellStyle($sheet, StyleColumn $style, string $column, $value);
+    abstract protected function cellStyle(Sheet $sheet, StyleColumn $style, string $column, $value);
 
     /**
      * 設定資料
