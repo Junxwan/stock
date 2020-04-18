@@ -16,6 +16,7 @@ class Kernel extends ConsoleKernel
         Key::class,
         EPS::class,
         OutKey::class,
+        Import::class,
     ];
 
     /**
