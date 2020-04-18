@@ -65,6 +65,14 @@ class Main extends Import
     /**
      * 寫入主力買賣超分點
      *
+     * 0 代碼
+     * 1 名稱
+     * 2 ~ 16 買超分點
+     * 17 ~ 31 賣超分點
+     * 32 ~ 46 買超張數
+     * 47 ~ 61 賣超張數
+     * 62 成交量
+     *
      * @param Collection $data
      *
      * @return bool
@@ -171,6 +179,14 @@ class Main extends Import
             if ($action == self::SELL) {
                 $model['count'] = -$model['count'];
             }
+
+            if ($stock[62] > 0) {
+                $volumeRatio = round(($model['count'] / $stock[62]) * 100, 2);
+            } else {
+                $volumeRatio = 0.00;
+            }
+
+            $model['volume_ratio'] = $volumeRatio;
 
             $models[] = $model;
         }

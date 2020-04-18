@@ -19,6 +19,7 @@ class CreateMainsTable extends Migration
             $table->date('date')->comment('時間');
             $table->string('name')->comment('分點名稱');
             $table->integer('count')->comment('張數');
+            $table->decimal('volume_ratio', 5)->default(0)->comment('成交量比');
 
             $table->index('date');
 
