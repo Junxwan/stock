@@ -7,7 +7,8 @@
 namespace App\Service\Import;
 
 use App\Exceptions\StockException;
-use App\Repository\Repository;
+use App\Repository\StockRepository;
+use App\Service\Arr;
 use App\Service\Xlsx\Xlsx;
 use Illuminate\Console\Concerns\InteractsWithIO;
 use Illuminate\Console\OutputStyle;
@@ -15,6 +16,7 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
 use Symfony\Component\Console\Input\ArgvInput;
 use Symfony\Component\Console\Output\ConsoleOutput;
+use App\Model\Stock as Model;
 
 abstract class Import
 {
@@ -31,6 +33,11 @@ abstract class Import
     protected $date;
 
     /**
+     * @var StockRepository
+     */
+    protected $stockRepo;
+
+    /**
      * import constructor.
      *
      * @param Xlsx $xlsx
@@ -41,6 +48,9 @@ abstract class Import
     {
         $this->xlsx = $xlsx;
         $this->date = $xlsx->date();
+        $this->stockRepo = app(StockRepository::class, [
+            'model' => app(Model::class),
+        ]);
 
         $this->output = app()->make(
             OutputStyle::class, ['input' => new ArgvInput(), 'output' => new ConsoleOutput()]
@@ -78,6 +88,71 @@ abstract class Import
             Log::error('code: ' . $e->getCode() . ' error: ' . $e->getMessage() . ' trace: ' . $e->getTraceAsString());
         } catch (\Exception $e) {
             Log::error(' error: ' . $e->getMessage() . ' trace: ' . $e->getTraceAsString());
+        }
+
+        return false;
+    }
+
+    /**
+     * 所有股票代碼
+     *
+     * @return array
+     */
+    protected function allCodes(): array
+    {
+        return $this->stockRepo->all()->pluck('code')->all();
+    }
+
+    /**
+     * 所有股票代碼
+     *
+     * @param Collection $data
+     *
+     * @return Collection
+     */
+    protected function getCodes(Collection $data)
+    {
+        $codes = array_filter($data->pluck('0')->toArray());
+        $unique = array_unique($codes);
+
+        return collect([
+            'repeat' => array_diff_assoc($codes, $unique),
+            'code' => $unique,
+        ]);
+    }
+
+    /**
+     * 撿查是否有重覆股票
+     *
+     * @param Collection $data
+     *
+     * @return bool
+     */
+    protected function checkRepeat(Collection $data): bool
+    {
+        if ($data->where('repeat')->isNotEmpty()) {
+            $this->error('==================================================');
+            $this->error('repeat code: ' . implode(',', $data['repeat']));
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * 撿查是否有股票是否存在資料庫清單中
+     *
+     * @param array $codes
+     *
+     * @return bool
+     */
+    protected function checkDiff(array $codes): bool
+    {
+        $diff = array_diff($codes, $this->allCodes());
+        if (count($diff) > 0) {
+            $this->error('==================================================');
+            $this->error('diff code: ' . implode(',', $diff['repeat']));
+            return true;
         }
 
         return false;

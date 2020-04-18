@@ -8,8 +8,6 @@ namespace App\Service\Import;
 
 use App\Exceptions\StockException;
 use App\Repository\MainRepository;
-use App\Repository\StockRepository;
-use App\Service\Arr;
 use App\Service\Xlsx\Xlsx;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
@@ -40,11 +38,6 @@ class Main extends Import
     private $repo;
 
     /**
-     * @var StockRepository
-     */
-    private $stockRepo;
-
-    /**
      * Main constructor.
      *
      * @param MainRepository $repo
@@ -55,10 +48,6 @@ class Main extends Import
     public function __construct(MainRepository $repo, Xlsx $xlsx)
     {
         $this->repo = $repo;
-        $this->stockRepo = app(StockRepository::class, [
-            'model' => app(\App\Model\Stock::class),
-        ]);
-
         parent::__construct($xlsx);
     }
 
@@ -80,19 +69,17 @@ class Main extends Import
      */
     protected function insert(Collection $data): bool
     {
-        $codes = Arr::key($this->repo->codes($this->date)->toArray(), 'code');
+        $codes = $this->getCodes($data);
 
-        // 撿查當前資料庫中股票清單與檔案中的股票是否有落差
-        $diff = array_diff(
-            $data->groupBy('0')->keys()->toArray(),
-            $this->stockRepo->all()->pluck('code')->toArray()
-        );
-
-        if (count($diff) != 0) {
-            $this->error("diff code: " . implode(',', $diff));
+        if ($this->checkRepeat($codes)) {
             return false;
         }
 
+        if ($this->checkDiff($codes['code'])) {
+            return false;
+        }
+
+        $existCodes = $this->existCodes();
         $saveMainTotal = 0;
         $mainTotal = 0;
         $code = 0;
@@ -101,7 +88,9 @@ class Main extends Import
         try {
             foreach ($data->all() as $i => $value) {
                 $code = $value[0];
-                if (isset($codes[$value[0]])) {
+
+                // 該股票分點資料已存在不用處理
+                if (in_array($code, $existCodes)) {
                     continue;
                 }
 
@@ -192,5 +181,15 @@ class Main extends Import
         }
 
         return $models;
+    }
+
+    /**
+     * 已存在主力買賣超分點股票代碼
+     *
+     * @return array
+     */
+    private function existCodes(): array
+    {
+        return $this->repo->codes($this->date)->pluck('code')->all();
     }
 }
