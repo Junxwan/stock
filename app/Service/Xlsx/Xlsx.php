@@ -30,7 +30,7 @@ abstract class Xlsx
      *
      * @throws \Illuminate\Contracts\Container\BindingResolutionException
      */
-    public function __construct(string $path, string $date)
+    public function __construct(string $path, string $date = '')
     {
         $this->path = $path;
         $this->date = $date;
@@ -49,7 +49,7 @@ abstract class Xlsx
      */
     public function getData()
     {
-        $this->info("read " . $this->name() . '....');
+        $this->info("read " . $this->name() . ' ....');
         $spreadsheet = IOFactory::load($this->getDataPath());
         return collect($spreadsheet->getSheet($this->index())->toArray());
     }

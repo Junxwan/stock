@@ -7,7 +7,7 @@
 namespace App\Service\Import;
 
 use App\Exceptions\StockException;
-use App\Repository\MainRepository;
+use App\Repository\Repository;
 use App\Service\Xlsx\Xlsx;
 use Illuminate\Console\Concerns\InteractsWithIO;
 use Illuminate\Console\OutputStyle;
@@ -26,11 +26,6 @@ abstract class Import
     private $xlsx;
 
     /**
-     * @var MainRepository
-     */
-    protected $repo;
-
-    /**
      * @var string
      */
     protected $date;
@@ -38,15 +33,13 @@ abstract class Import
     /**
      * import constructor.
      *
-     * @param MainRepository $repo
      * @param Xlsx $xlsx
      *
      * @throws \Illuminate\Contracts\Container\BindingResolutionException
      */
-    public function __construct(MainRepository $repo, Xlsx $xlsx)
+    public function __construct(Xlsx $xlsx)
     {
         $this->xlsx = $xlsx;
-        $this->repo = $repo;
         $this->date = $xlsx->date();
 
         $this->output = app()->make(
