@@ -47,6 +47,18 @@ class Stock extends Import
     /**
      * 新增股票清單
      *
+     * 0 代碼
+     * 1 名稱
+     * 2 股本(千)
+     * 3 產業名稱
+     * 4 產業指數代號
+     * 5 產業指數名稱
+     * 6 CM細產業分類
+     * 7 上市(1) or 上櫃(2)
+     * 8 上市日期
+     * 9 上櫃日期
+     * 10 成立日期
+     *
      * @param Collection $data
      *
      * @return bool
