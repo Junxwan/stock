@@ -149,7 +149,9 @@ class EPS extends Import
             throw new StockException($e, $code);
         }
 
-        $this->info('total: ' . count(array_unique(array_filter($data->pluck('1')->toArray()))) . ' save: ' . $saveTotal . ' update: ' . $updateTotal);
+        $codes = $this->getCodes($data);
+
+        $this->info('total: ' . count($codes['code']) . ' save: ' . $saveTotal . ' update: ' . $updateTotal);
 
         if (count($updateCodes) > 0) {
             $this->info('==============================================');
