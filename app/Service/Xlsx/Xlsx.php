@@ -23,6 +23,11 @@ abstract class Xlsx
     protected $date;
 
     /**
+     * @var array
+     */
+    protected $removeIndexs = [];
+
+    /**
      * Xlsx constructor.
      *
      * @param string $path
@@ -51,7 +56,11 @@ abstract class Xlsx
     {
         $this->info("read " . $this->name() . ' ....');
         $spreadsheet = IOFactory::load($this->getDataPath());
-        return collect($spreadsheet->getSheet($this->index())->toArray());
+        $data = collect($spreadsheet->getSheet($this->index())->toArray());
+        foreach ($this->removeIndexs as $index) {
+            unset($data[$index]);
+        }
+        return $data;
     }
 
     /**
