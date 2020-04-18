@@ -5,6 +5,11 @@ namespace App\Service\Xlsx;
 class Main extends Xlsx
 {
     /**
+     * @var int[]
+     */
+    protected $removeIndexs = [0];
+
+    /**
      * @return string
      */
     protected function getDataPath(): string
