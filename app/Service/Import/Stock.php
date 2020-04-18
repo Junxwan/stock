@@ -63,8 +63,12 @@ class Stock extends Import
                 continue;
             }
 
-            if ($value[4] == '' || $value[1] == '') {
+            if ($value[1] == '') {
                 continue;
+            }
+
+            if ($value[4] == '') {
+                $value[4] = null;
             }
 
             $total++;

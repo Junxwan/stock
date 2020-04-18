@@ -14,10 +14,10 @@ class CreateStocksTable extends Migration
     public function up()
     {
         Schema::create('stocks', function (Blueprint $table) {
-            $table->char('code', 4)->primary()->comment('代碼');
+            $table->string('code', 6)->primary()->comment('代碼');
             $table->string('name', 50)->comment('名稱');
             $table->integer('capital')->comment('股本(千)');
-            $table->char('industry_code', 5)->comment('產業分類');
+            $table->char('industry_code', 5)->nullable()->comment('產業分類');
             $table->char('classification', 50)->comment('細產業分類');
             $table->tinyInteger('issued')->comment('上市:1 上櫃:2');
             $table->date('twse_date')->nullable()->comment('上市日期');
