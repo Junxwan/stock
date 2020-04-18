@@ -15,13 +15,14 @@ class CreateMainsTable extends Migration
     public function up()
     {
         Schema::create('mains', function (Blueprint $table) {
-            $table->char('code', 8)->comment('代碼');
+            $table->string('code', 6)->comment('代碼');
             $table->date('date')->comment('時間');
             $table->string('name')->comment('分點名稱');
             $table->integer('count')->comment('張數');
 
-            $table->index('code');
             $table->index('date');
+
+            $table->foreign('code')->references('code')->on('stocks');
         });
 
         DB::statement('ALTER TABLE `mains` COMMENT = "主力分點買賣超分點"');

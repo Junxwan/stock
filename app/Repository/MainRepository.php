@@ -15,7 +15,6 @@ class MainRepository extends Repository
             ->where("date", $date)
             ->distinct()
             ->select('code')
-            ->get()
-            ->pluck('code');
+            ->get();
     }
 }

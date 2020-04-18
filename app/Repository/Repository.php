@@ -3,6 +3,7 @@
 namespace App\Repository;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\DB;
 
 abstract class Repository
 {
@@ -21,6 +22,21 @@ abstract class Repository
         $this->model = $model;
     }
 
+    public function beginTransaction()
+    {
+        $this->model->newQuery()->getConnection()->beginTransaction();
+    }
+
+    public function commit()
+    {
+        $this->model->newQuery()->getConnection()->commit();
+    }
+
+    public function rollBack()
+    {
+        $this->model->newQuery()->getConnection()->rollBack();
+    }
+
     /**
      * @param array $models
      *
@@ -28,6 +44,7 @@ abstract class Repository
      */
     public function batchInsert(array $models): bool
     {
+
         return $this->model->newQuery()->insert($models);
     }
 }

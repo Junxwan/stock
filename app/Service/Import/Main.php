@@ -7,7 +7,12 @@
 namespace App\Service\Import;
 
 use App\Exceptions\StockException;
+use App\Repository\MainRepository;
+use App\Repository\StockRepository;
+use App\Service\Arr;
+use App\Service\Xlsx\Xlsx;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Log;
 
 class Main extends Import
 {
@@ -30,6 +35,36 @@ class Main extends Import
     ];
 
     /**
+     * @var MainRepository
+     */
+    private $repo;
+
+    /**
+     * @var StockRepository
+     */
+    private $stockRepo;
+
+    /**
+     * Main constructor.
+     *
+     * @param MainRepository $repo
+     * @param Xlsx $xlsx
+     *
+     * @throws \Illuminate\Contracts\Container\BindingResolutionException
+     */
+    public function __construct(MainRepository $repo, Xlsx $xlsx)
+    {
+        $this->repo = $repo;
+        $this->stockRepo = app(StockRepository::class, [
+            'model' => app(\App\Model\Stock::class),
+        ]);
+
+        parent::__construct($xlsx);
+    }
+
+    /**
+     * 寫入主力買賣超分點
+     *
      * @param Collection $data
      *
      * @return bool
@@ -37,16 +72,19 @@ class Main extends Import
      */
     protected function insert(Collection $data): bool
     {
-        $insert = [];
+        $codes = Arr::key($this->repo->codes($this->date)->toArray(), 'code');
 
-        $codes = $this->repo->codes($this->date);
+        // 撿查當前資料庫中股票清單與檔案中的股票是否有落差
+        $diff = array_diff(
+            $data->groupBy('0')->keys()->toArray(),
+            $this->stockRepo->all()->pluck('code')->toArray()
+        );
 
-        /**
-         * 寫入的股票總數
-         * 寫入的分點總數
-         * 總分點總數
-         */
-        $saveCodeTotal = 0;
+        if (count($diff) != 0) {
+            $this->error("diff code: " . implode(',', $diff));
+            return false;
+        }
+
         $saveMainTotal = 0;
         $mainTotal = 0;
         $code = 0;
@@ -59,6 +97,10 @@ class Main extends Import
                     continue;
                 }
 
+                if ($value[1] == '' || strlen($value[0]) != 4) {
+                    continue;
+                }
+
                 $mainTotal += count(array_filter(array_slice($value, 2, 30)));
 
                 $models = array_merge(
@@ -68,34 +110,36 @@ class Main extends Import
 
                 $insert = array_merge($insert, $models);
 
-                $saveCodeTotal++;
-
-                if ($i % 50 == 0) {
+                if ($i % 100 == 0) {
                     $this->info($i);
-                }
-
-                if (count($insert) <= 5000) {
-                    continue;
-                }
-
-                if ($this->repo->batchInsert($insert)) {
-                    $saveMainTotal += count($insert);
-                    $insert = [];
-                } else {
-                    break;
                 }
             }
         } catch (\Exception $e) {
             throw new StockException($e, $code);
         }
 
-        if ($this->repo->batchInsert($insert)) {
-            $saveMainTotal += count($insert);
-        }
-
         $this->info('date: ' . $this->date);
-        $this->info('code total: ' . $data->count() . ' save code total: ' . $saveCodeTotal);
-        $this->info('main total: ' . $mainTotal . ' save main total: ' . $saveMainTotal);
+
+        // 批次寫入資料
+        try {
+            $this->repo->beginTransaction();
+
+            foreach (collect($insert)->chunk(5000)->toArray() as $value) {
+                if ($this->repo->batchInsert($value)) {
+                    $saveMainTotal += count($value);
+                    $this->info('main total: ' . $mainTotal . ' save main total: ' . $saveMainTotal);
+                } else {
+                    throw new \Exception('save error', $saveMainTotal);
+                }
+            }
+
+            $this->repo->commit();
+
+            $this->info('result total: ' . $mainTotal . ' save total: ' . $saveMainTotal);
+        } catch (\Exception $e) {
+            $this->repo->rollBack();
+            Log::error("rollBack: " . $e->getMessage());
+        }
 
         return true;
     }
