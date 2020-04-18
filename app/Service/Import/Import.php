@@ -151,7 +151,7 @@ abstract class Import
      */
     protected function checkRepeat(Collection $data): bool
     {
-        if ($data->where('repeat')->isNotEmpty()) {
+        if (count($data['repeat']) > 0) {
             $this->error('==================================================');
             $this->error('repeat code: ' . implode(',', $data['repeat']));
             return true;
