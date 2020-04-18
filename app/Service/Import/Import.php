@@ -172,7 +172,7 @@ abstract class Import
         $diff = array_diff($data->get('code'), $this->allCodes());
         if (count($diff) > 0) {
             $this->error('==================================================');
-            $this->error('diff code: ' . implode(',', $diff['repeat']));
+            $this->error('diff code: ' . implode(',', $diff));
             return true;
         }
 
