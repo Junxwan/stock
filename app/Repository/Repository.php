@@ -3,7 +3,6 @@
 namespace App\Repository;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Facades\DB;
 
 abstract class Repository
 {
@@ -38,13 +37,22 @@ abstract class Repository
     }
 
     /**
+     * @param array $values
+     *
+     * @return bool
+     */
+    public function insert(array $values): bool
+    {
+        return $this->model->newQuery()->insert($values);
+    }
+
+    /**
      * @param array $models
      *
      * @return bool
      */
     public function batchInsert(array $models): bool
     {
-
         return $this->model->newQuery()->insert($models);
     }
 }

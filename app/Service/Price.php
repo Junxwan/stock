@@ -108,6 +108,8 @@ class Price
                     $res[$value[0]] = $result[$q][$value[0]];
                 }
             }
+
+            ksort($res[$value[0]]);
         }
 
         $this->price = collect($res);

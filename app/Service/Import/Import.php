@@ -12,6 +12,7 @@ use App\Service\Arr;
 use App\Service\Xlsx\Xlsx;
 use Illuminate\Console\Concerns\InteractsWithIO;
 use Illuminate\Console\OutputStyle;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
 use Symfony\Component\Console\Input\ArgvInput;
@@ -131,11 +132,7 @@ abstract class Import
     protected function checkCode(Collection $data)
     {
         $codes = $this->getCodes($data);
-        if ($this->checkRepeat($codes)) {
-            return true;
-        }
-
-        if ($this->checkDiff($codes)) {
+        if ($this->checkRepeat($codes) || $this->checkDiff($codes)) {
             return true;
         }
 
@@ -169,7 +166,7 @@ abstract class Import
      */
     protected function checkDiff(Collection $data): bool
     {
-        $diff = array_diff($data->get('code'), $this->allCodes());
+        $diff = array_diff($data['code'], $this->allCodes());
         if (count($diff) > 0) {
             $this->error('==================================================');
             $this->error('diff code: ' . implode(',', $diff));
@@ -177,6 +174,33 @@ abstract class Import
         }
 
         return false;
+    }
+
+    /**
+     * 四捨五入
+     *
+     * @param $value
+     * @param int $precision
+     *
+     * @return false|float
+     */
+    protected function round($value, int $precision = 0)
+    {
+        return round($this->formatInt($value), $precision);
+    }
+
+    /**
+     * @param $value
+     *
+     * @return mixed
+     */
+    protected function formatDate($value)
+    {
+        if ($value == '') {
+            return null;
+        }
+
+        return Carbon::createFromFormat('Ymd', $value)->format('Y-m-d');
     }
 
     /**

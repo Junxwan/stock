@@ -21,16 +21,6 @@ class EPSRepository extends Repository
     /**
      * @param array $values
      *
-     * @return bool
-     */
-    public function insert(array $values): bool
-    {
-        return $this->model->newQuery()->insert($values);
-    }
-
-    /**
-     * @param array $values
-     *
      * @return int
      */
     public function update(array $values)
