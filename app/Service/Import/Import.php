@@ -122,6 +122,27 @@ abstract class Import
     }
 
     /**
+     * 撿查股票代碼
+     *
+     * @param Collection $data
+     *
+     * @return bool
+     */
+    protected function checkCode(Collection $data)
+    {
+        $codes = $this->getCodes($data);
+        if ($this->checkRepeat($codes)) {
+            return true;
+        }
+
+        if ($this->checkDiff($codes)) {
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
      * 撿查是否有重覆股票
      *
      * @param Collection $data
@@ -142,13 +163,13 @@ abstract class Import
     /**
      * 撿查是否有股票是否存在資料庫清單中
      *
-     * @param array $codes
+     * @param Collection $codes
      *
      * @return bool
      */
-    protected function checkDiff(array $codes): bool
+    protected function checkDiff(Collection $data): bool
     {
-        $diff = array_diff($codes, $this->allCodes());
+        $diff = array_diff($data->get('code'), $this->allCodes());
         if (count($diff) > 0) {
             $this->error('==================================================');
             $this->error('diff code: ' . implode(',', $diff['repeat']));

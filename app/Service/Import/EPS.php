@@ -65,14 +65,9 @@ class EPS extends Import
         $saveTotal = 0;
         $updateTotal = 0;
         $updateCodes = [];
-        $codes = $this->getCodes($data);
 
-        if ($this->checkRepeat($codes)) {
-            return false;
-        }
-
-        if ($this->checkDiff($codes['code'])) {
-            return false;
+        if ($this->checkCode($data)) {
+            return true;
         }
 
         try {
