@@ -66,12 +66,12 @@ class Stock extends Import
     protected function insert(Collection $data): bool
     {
         $this->industryInsert($data);
-        $stocks = Arr::key($this->repo->all()->toArray(), 'code');
+        $stocks = $this->allCodes();
         $total = 0;
         $insert = [];
 
         foreach ($data->all() as $i => $value) {
-            if (isset($stocks[$value[0]])) {
+            if (in_array($value[0], $stocks)) {
                 continue;
             }
 
