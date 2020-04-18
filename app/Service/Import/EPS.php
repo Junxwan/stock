@@ -65,9 +65,15 @@ class EPS extends Import
         $saveTotal = 0;
         $updateTotal = 0;
         $updateCodes = [];
+        $codes = $this->getCodes($data);
 
-        $codes = array_filter($data->pluck('0')->toArray());
-        $repeat = array_diff_assoc($codes, array_unique($codes));
+        if ($this->checkRepeat($codes)) {
+            return false;
+        }
+
+        if ($this->checkDiff($codes['code'])) {
+            return false;
+        }
 
         try {
             foreach ($data->all() as $i => $value) {
@@ -149,12 +155,6 @@ class EPS extends Import
         }
 
         $this->info('total: ' . count(array_unique(array_filter($data->pluck('1')->toArray()))) . ' save: ' . $saveTotal . ' update: ' . $updateTotal);
-
-        if (count($repeat) > 0) {
-            $this->info('==============================================');
-            $this->info('repeat total: ' . count($repeat));
-            $this->info('repeat code: ' . implode(',', $repeat));
-        }
 
         if (count($updateCodes) > 0) {
             $this->info('==============================================');
