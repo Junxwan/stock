@@ -82,4 +82,14 @@ abstract class Import
 
         return false;
     }
+
+    /**
+     * @param $value
+     *
+     * @return int
+     */
+    protected function formatInt($value)
+    {
+        return $value == "" ? 0 : $value;
+    }
 }
