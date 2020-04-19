@@ -85,7 +85,7 @@ class Point extends Import
 
                 $insert[$value[0]] = [
                     'code' => $value[0],
-                    'name' => $value[1],
+                    'name' => implode('', explode(' ', $value[1])),
                     'type' => $this->type[$key],
                 ];
             }
