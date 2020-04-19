@@ -93,7 +93,7 @@ abstract class Xlsx
 
             // 最後一筆資料如果是統計筆數則移除
             if ($data->last()[1] == null) {
-                unset($data[$data->count()]);
+                $data->pop();
             }
         }
 
