@@ -4,6 +4,7 @@ namespace App\Service\Xlsx;
 
 use Illuminate\Console\Concerns\InteractsWithIO;
 use Illuminate\Console\OutputStyle;
+use Illuminate\Support\Carbon;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use Symfony\Component\Console\Input\ArgvInput;
 use Symfony\Component\Console\Output\ConsoleOutput;
@@ -23,6 +24,11 @@ abstract class Xlsx
     protected $date;
 
     /**
+     * @var string
+     */
+    protected $year;
+
+    /**
      * @var array
      */
     protected $removeIndexs = [];
@@ -38,7 +44,14 @@ abstract class Xlsx
     public function __construct(string $path, string $date = '')
     {
         $this->path = $path;
-        $this->date = $date;
+
+        if ($date == 'now') {
+            $this->date = date('Y-m-d');
+            $this->year = date('Y');
+        } else {
+            $this->date = $date;
+            $this->year = Carbon::createFromFormat('Y-m-d', $this->date)->year;
+        }
 
         $this->output = app()->make(
             OutputStyle::class, ['input' => new ArgvInput(), 'output' => new ConsoleOutput()]
@@ -81,6 +94,14 @@ abstract class Xlsx
     public function date()
     {
         return $this->date;
+    }
+
+    /**
+     * @return int|string
+     */
+    public function year()
+    {
+        return $this->year;
     }
 
     /**

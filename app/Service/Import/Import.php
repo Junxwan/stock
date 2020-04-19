@@ -8,7 +8,6 @@ namespace App\Service\Import;
 
 use App\Exceptions\StockException;
 use App\Repository\StockRepository;
-use App\Service\Arr;
 use App\Service\Xlsx\Xlsx;
 use Illuminate\Console\Concerns\InteractsWithIO;
 use Illuminate\Console\OutputStyle;
@@ -34,6 +33,11 @@ abstract class Import
     protected $date;
 
     /**
+     * @var string|int
+     */
+    protected $year;
+
+    /**
      * @var StockRepository
      */
     protected $stockRepo;
@@ -49,6 +53,8 @@ abstract class Import
     {
         $this->xlsx = $xlsx;
         $this->date = $xlsx->date();
+        $this->year = $xlsx->year();
+
         $this->stockRepo = app(StockRepository::class, [
             'model' => app(Model::class),
         ]);

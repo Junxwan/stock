@@ -90,7 +90,7 @@ class EPS extends Import
 
                 $insert = [
                     'code' => $code,
-                    'year' => $this->date,
+                    'year' => $this->year,
                     'q4' => $this->formatInt($value[2]),
                     'q3' => $this->formatInt($value[3]),
                     'q2' => $this->formatInt($value[4]),

@@ -15,10 +15,6 @@ class Facade
      */
     public static function save(string $path, string $date, string $type)
     {
-        if ($date == 'now') {
-            $date = date('Y-m-d');
-        }
-
         $import = app('App\Service\Import\\' . $type, [
             'xlsx' => app('App\Service\Xlsx\\' . $type, [
                 'path' => $path,
