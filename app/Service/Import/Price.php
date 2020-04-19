@@ -96,7 +96,7 @@ class Price extends Import
                 $d = $d->where('29', '');
 
                 if ($d->isEmpty()) {
-                    throw new \Exception('compulsory replenishment day is not empty');
+                    throw new \Exception($code . ' compulsory replenishment day is not empty');
                 }
 
                 unset($data[$d->keys()->get(0)]);
