@@ -22,6 +22,6 @@ class EPS extends Xlsx
      */
     public function name(): string
     {
-        return $this->date . '_eps.xlsx';
+        return $this->year . '_eps.xlsx';
     }
 }
