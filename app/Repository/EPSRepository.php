@@ -2,8 +2,20 @@
 
 namespace App\Repository;
 
+use App\Model\EPS;
+
 class EPSRepository extends Repository
 {
+    /**
+     * EPSRepository constructor.
+     *
+     * @param EPS $model
+     */
+    public function __construct(EPS $model)
+    {
+        parent::__construct($model);
+    }
+
     /**
      * @param string $code
      * @param $year

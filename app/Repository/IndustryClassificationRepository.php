@@ -2,8 +2,21 @@
 
 namespace App\Repository;
 
+
+use App\Model\IndustryClassification;
+
 class IndustryClassificationRepository extends Repository
 {
+    /**
+     * IndustryClassificationRepository constructor.
+     *
+     * @param IndustryClassification $model
+     */
+    public function __construct(IndustryClassification $model)
+    {
+        parent::__construct($model);
+    }
+
     /**
      * 全部資料
      *
