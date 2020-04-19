@@ -90,6 +90,11 @@ abstract class Xlsx
             foreach ($this->removeIndexs as $index) {
                 unset($data[$index]);
             }
+
+            // 最後一筆資料如果是統計筆數則移除
+            if ($data->last()[1] == null) {
+                unset($data[$data->count()]);
+            }
         }
 
         return $data;
