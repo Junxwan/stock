@@ -26,6 +26,11 @@ class Point extends Xlsx
     const JINGJI = 'jingji';
 
     /**
+     * 未列
+     */
+    const OTHER = 'other';
+
+    /**
      * @var array
      */
     protected $removeIndexs = [0];
@@ -58,6 +63,7 @@ class Point extends Xlsx
             1 => self::FOREIGN,
             2 => self::OFFICIAL,
             3 => self::JINGJI,
+            4 => self::OTHER,
         ];
     }
 }
