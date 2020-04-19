@@ -39,6 +39,7 @@ class Point extends Import
         Type::FOREIGN => self::FOREIGN,
         Type::OFFICIAL => self::OFFICIAL,
         Type::JINGJI => self::JINGJI,
+        Type::OTHER => self::GENERAL,
     ];
 
     /**
