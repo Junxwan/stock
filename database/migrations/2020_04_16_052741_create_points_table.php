@@ -15,7 +15,7 @@ class CreatePointsTable extends Migration
     public function up()
     {
         Schema::create('points', function (Blueprint $table) {
-            $table->char('code', 4)->comment('代碼');
+            $table->string('code', 5)->comment('代碼');
             $table->string('name', 20)->comment('名稱');
             $table->tinyInteger('type')->comment('0:一般,1:外資,2:官股,3:經記部');
 
