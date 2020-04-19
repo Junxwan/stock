@@ -2,6 +2,7 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 class CreatePricesTable extends Migration
@@ -63,6 +64,8 @@ class CreatePricesTable extends Migration
             $table->index('date');
             $table->foreign('code')->references('code')->on('stocks');
         });
+
+        DB::statement('ALTER TABLE `prices` COMMENT = "個股每天行情"');
     }
 
     /**
