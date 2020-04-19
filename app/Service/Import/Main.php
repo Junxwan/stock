@@ -33,9 +33,19 @@ class Main extends Import
     ];
 
     /**
+     * @var array
+     */
+    private $point;
+
+    /**
      * @var MainRepository
      */
     private $repo;
+
+    /**
+     * @var int
+     */
+    private $zeroPoint = 0;
 
     /**
      * Main constructor.
@@ -47,8 +57,9 @@ class Main extends Import
      */
     public function __construct(MainRepository $repo, Xlsx $xlsx)
     {
-        $this->repo = $repo;
         parent::__construct($xlsx);
+        $this->repo = $repo;
+        $this->point = $this->allPoint();
     }
 
     /**
@@ -126,7 +137,7 @@ class Main extends Import
 
             $this->repo->commit();
 
-            $this->info('result total: ' . $mainTotal . ' save total: ' . $saveMainTotal);
+            $this->info('result total: ' . $mainTotal . ' save total: ' . $saveMainTotal . ' zero point: ' . $this->zeroPoint);
         } catch (\Exception $e) {
             $this->repo->rollBack();
             Log::error("rollBack: " . $e->getMessage());
@@ -152,11 +163,21 @@ class Main extends Import
                 continue;
             }
 
+            if (! isset($this->point[$stock[$i]])) {
+                throw new \Exception('not [' . $stock[$i] . '] point');
+            }
+
+            $count = $stock[$i + 30];
+            if ($count == 0) {
+                $this->zeroPoint++;
+                continue;
+            }
+
             $model = [
                 'code' => $stock[0],
                 'date' => $this->date,
-                'name' => $stock[$i],
-                'count' => $stock[$i + 30],
+                'point_code' => $this->point[$stock[$i]]['code'],
+                'count' => $count,
             ];
 
             if ($action == self::SELL) {
@@ -185,5 +206,20 @@ class Main extends Import
     private function existCodes(): array
     {
         return $this->repo->codes($this->date)->pluck('code')->all();
+    }
+
+    /**
+     * 所有分點
+     *
+     * @return Collection
+     */
+    private function allPoint()
+    {
+        $data = collect();
+        foreach ($this->pointRepo->all() as $value) {
+            $data->put($value['name'], $value);
+        }
+
+        return $data;
     }
 }

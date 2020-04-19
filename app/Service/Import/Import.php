@@ -7,6 +7,7 @@
 namespace App\Service\Import;
 
 use App\Exceptions\StockException;
+use App\Repository\PointRepository;
 use App\Repository\StockRepository;
 use App\Service\Xlsx\Xlsx;
 use Illuminate\Console\Concerns\InteractsWithIO;
@@ -43,6 +44,11 @@ abstract class Import
     protected $stockRepo;
 
     /**
+     * @var PointRepository
+     */
+    protected $pointRepo;
+
+    /**
      * import constructor.
      *
      * @param Xlsx $xlsx
@@ -55,9 +61,8 @@ abstract class Import
         $this->date = $xlsx->date();
         $this->year = $xlsx->year();
 
-        $this->stockRepo = app(StockRepository::class, [
-            'model' => app(Model::class),
-        ]);
+        $this->stockRepo = app(StockRepository::class);
+        $this->pointRepo = app(PointRepository::class);
 
         $this->output = app()->make(
             OutputStyle::class, ['input' => new ArgvInput(), 'output' => new ConsoleOutput()]
