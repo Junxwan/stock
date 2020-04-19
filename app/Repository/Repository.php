@@ -55,4 +55,12 @@ abstract class Repository
     {
         return $this->model->newQuery()->insert($models);
     }
+
+    /**
+     * @return \Illuminate\Database\Eloquent\Collection
+     */
+    public function all()
+    {
+        return $this->model->newQuery()->get();
+    }
 }

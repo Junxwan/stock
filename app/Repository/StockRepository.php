@@ -10,12 +10,4 @@ class StockRepository extends Repository
     {
         parent::__construct($model);
     }
-
-    /**
-     * @return \Illuminate\Database\Eloquent\Collection
-     */
-    public function all()
-    {
-        return $this->model->newQuery()->get();
-    }
 }
