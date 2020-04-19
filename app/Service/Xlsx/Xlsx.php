@@ -67,13 +67,38 @@ abstract class Xlsx
      */
     public function getData()
     {
-        $this->info("read " . $this->name() . ' ....');
-        $spreadsheet = IOFactory::load($this->getDataPath());
-        $data = collect($spreadsheet->getSheet($this->index())->toArray());
-        foreach ($this->removeIndexs as $index) {
-            unset($data[$index]);
+        $spreadsheet = $this->getSpreadsheet();
+        $index = $this->index();
+
+        if (is_array($index)) {
+            $data = collect();
+            foreach ($index as $i => $k) {
+                $d = collect($spreadsheet->getSheet($i)->toArray());
+
+                foreach ($this->removeIndexs as $c) {
+                    unset($d[$c]);
+                }
+
+                $data->put($k, $d);
+            }
+        } else {
+            $data = collect($spreadsheet->getSheet($index)->toArray());
+            foreach ($this->removeIndexs as $index) {
+                unset($data[$index]);
+            }
         }
+
         return $data;
+    }
+
+    /**
+     * @return \PhpOffice\PhpSpreadsheet\Spreadsheet
+     * @throws \PhpOffice\PhpSpreadsheet\Reader\Exception
+     */
+    protected function getSpreadsheet()
+    {
+        $this->info("read " . $this->name() . ' ....');
+        return IOFactory::load($this->getDataPath());
     }
 
     /**
@@ -107,9 +132,9 @@ abstract class Xlsx
     /**
      * Sheet index
      *
-     * @return int
+     * @return mixed
      */
-    protected function index(): int
+    protected function index()
     {
         return 0;
     }
