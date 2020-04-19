@@ -98,7 +98,7 @@ class Point extends Import
 
         $this->info('====================================================');
         $this->info('save total: ' . count($insert));
-        $this->info('code: ' . implode(',', $insert));
+        $this->info('code: ' . implode(',', collect($insert)->pluck('code')->toArray()));
 
         return $result;
     }
