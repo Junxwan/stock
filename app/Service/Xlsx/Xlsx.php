@@ -48,6 +48,10 @@ abstract class Xlsx
         if ($date == 'now') {
             $this->date = date('Y-m-d');
             $this->year = date('Y');
+        } elseif (strlen($date) == 4) {
+            $t = Carbon::createFromFormat('Y', $date);
+            $this->date = $t->format('Y-m-d');
+            $this->year = $t->year;
         } else {
             $this->date = $date;
             $this->year = Carbon::createFromFormat('Y-m-d', $this->date)->year;
