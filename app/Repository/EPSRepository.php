@@ -17,6 +17,18 @@ class EPSRepository extends Repository
     }
 
     /**
+     * @param string $year
+     *
+     * @return \Illuminate\Database\Eloquent\Builder[]|\Illuminate\Database\Eloquent\Collection
+     */
+    public function year(string $year)
+    {
+        return $this->model->newQuery()
+            ->where("year", $year)
+            ->get();
+    }
+
+    /**
      * @param string $code
      * @param $year
      *

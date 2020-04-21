@@ -15,16 +15,4 @@ class PriceRepository extends Repository
     {
         parent::__construct($model);
     }
-
-    /**
-     * 某日所有股票
-     *
-     * @param string $date
-     *
-     * @return \Illuminate\Database\Eloquent\Builder[]|\Illuminate\Database\Eloquent\Collection
-     */
-    public function date(string $date)
-    {
-        return $this->model->newQuery()->where('date', $date)->get();
-    }
 }

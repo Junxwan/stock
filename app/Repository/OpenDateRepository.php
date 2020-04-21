@@ -15,4 +15,18 @@ class OpenDateRepository extends Repository
     {
         parent::__construct($model);
     }
+
+    /**
+     * @param string $date
+     *
+     * @return \Illuminate\Database\Eloquent\Model|object|null
+     */
+    public function yesterday(string $date)
+    {
+        return $this->model->newQuery()
+            ->where('date', "<", $date)
+            ->where('open', true)
+            ->orderByDesc('date')
+            ->first();
+    }
 }

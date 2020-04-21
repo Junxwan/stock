@@ -63,4 +63,19 @@ abstract class Repository
     {
         return $this->model->newQuery()->get();
     }
+
+    /**
+     * 某日資料
+     *
+     * @param string $date
+     *
+     * @return \Illuminate\Database\Eloquent\Collection
+     */
+    public function date(string $date)
+    {
+        return $this->model->newQuery()
+            ->where('date', $date)
+            ->orderBy('code')
+            ->get();
+    }
 }
