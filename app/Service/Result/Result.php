@@ -244,7 +244,7 @@ abstract class Result
      * @return \Illuminate\Support\Collection
      * @throws \Exception
      */
-    protected function result(string $date)
+    public function result(string $date)
     {
         $result = collect();
         foreach ($this->priceResultRepo->date($date) as $value) {

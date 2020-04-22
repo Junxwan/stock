@@ -96,8 +96,6 @@ class Write extends Xlsx
         } catch (\Exception $e) {
             throw new StockException($e, $code);
         }
-
-        $sheet->putOther($worksheet, $index);
     }
 
     /**

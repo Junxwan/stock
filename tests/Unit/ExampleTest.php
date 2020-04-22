@@ -5,12 +5,11 @@ use Tests\TestCase;
 
 class ExampleTest extends TestCase
 {
-    public function testKeySelect()
+    public function testExport()
     {
-        Artisan::call("key:select", [
-            "key_path" => 'C:\Users\junx\Desktop\Finance\transaction.xlsx',
-            "date" => '2020-04-10',
-            "path" => 'C:\Users\junx\Desktop\Finance\data',
+        Artisan::call("export:key", [
+            "date" => '2020-04-17',
+            "path" => 'C:\Users\junx\Desktop\Finance\data\result',
         ]);
 
         // php artisan key:select C:\Users\junx\Desktop\Finance\key\key_2020_02_05.xlsx C:\Users\junx\Desktop\Finance\key\day\2020-02-27.xls C:\Users\junx\Desktop\Finance\key\result
@@ -34,6 +33,31 @@ class ExampleTest extends TestCase
         ]);
 
         // php artisan key:out C:\Users\junx\Desktop\Finance\transaction.xlsx C:\Users\junx\Desktop\Finance\key
+    }
+
+    public function testImport()
+    {
+        Artisan::call("stock:import", [
+            "type" => 'price',
+            "date" => '2020-04-16',
+            "path" => 'C:\Users\junx\Desktop\Finance\data',
+        ]);
+    }
+
+    public function testResult()
+    {
+        Artisan::call("data:result", [
+            "date" => '2020-04-17',
+            "type" => 'price',
+            '--key_path' => 'C:\Users\junx\Desktop\Finance\transaction.xlsx',
+        ]);
+    }
+
+    public function testOpenDate()
+    {
+        Artisan::call("create:openDate", [
+            "year" => '2020',
+        ]);
     }
 
     public function testS()

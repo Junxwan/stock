@@ -17,15 +17,6 @@ interface Sheet
     public function putData(array $value): array;
 
     /**
-     * @param Worksheet $sheet
-     * @param int $index
-     *
-     * @return mixed|void
-     * @throws \PhpOffice\PhpSpreadsheet\Exception
-     */
-    public function putOther(Worksheet $sheet, int $index);
-
-    /**
      * sheet index
      *
      * @return int
