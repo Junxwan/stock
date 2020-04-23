@@ -33,6 +33,8 @@ class CreatePriceResultsTable extends Migration
             $table->smallInteger('high_stray')->comment('離高點打幾% (收盤價/最近一年(250天)最高價)*100');
             $table->smallInteger('low_stray')->comment('離低點漲了多少% ((收盤價/最近一年(250天)最低價)-1)*100');
             $table->decimal('volume_20_multiple', self::LIE_TOTAL, 1)->comment('20日成交均量幾倍');
+            $table->decimal('current_ratio', 5)->comment('當沖比率 = ((現股+資卷)/成交量)*100');
+            $table->integer('current_loss')->comment('當沖損益');
 
             $table->index('date');
             $table->foreign('code')->references('code')->on('stocks');
