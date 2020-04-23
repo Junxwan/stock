@@ -34,45 +34,66 @@ class Price extends Import
      * 1 名稱
      * 2 開盤價
      * 3 收盤價
-     * 4 漲幅%
-     * 5 最高價
-     * 6 最低價
-     * 7 股價乖離年線(%)
-     * 8 股價乖離季線(%)
-     * 9 股價乖離月線(%)
-     * 10 最近一年(250天)最高價
-     * 11 最近一年(250天)最低價
-     * 12 yoy
-     * 13 mom
-     * 14 融資維持率(%)
-     * 15 融資資使用率(%)
-     * 16 股價淨值比
-     * 17 1日主力買賣超(%)
-     * 18 5日主力買賣超(%)
-     * 19 10日主力買賣超(%)
-     * 20 20日主力買賣超(%)
-     * 21 上通道
-     * 22 下通道
-     * 23 月線
-     * 24 券資比
-     * 25 分點連買N日
-     * 26 投信連買N日
-     * 27 外資連買N日
-     * 28 自營商連買N日
-     * 29 融券回補日
-     * 30 成交量(股)
-     * 31 週轉率(%)
-     * 32 主力成本
-     * 33 外資持股成本
-     * 34 投信持股成本
-     * 35 自營商持股成本
-     * 36 現股當沖成交量
-     * 37 資券相抵成交量
-     * 38 20日成交均量
-     * 39 外資買賣超
-     * 40 投信買賣超
-     * 41 自營商買賣超
-     *
+     * 4 漲幅(%)
+     * 5 振福(%)
+     * 6 最高價
+     * 7 最低價
+     * 8 最近一年(250天)最高價
+     * 9 最近一年(250天)最低價
+     * 10 5日均線
+     * 11 10日均線
+     * 12 20日均線
+     * 13 60日均線
+     * 14 240日均線
+     * 15 股價乖離5日均線(%)
+     * 16 股價乖離10日均線(%)
+     * 17 股價乖離月線(%)
+     * 18 股價乖離季線(%)
+     * 19 股價乖離年線(%)
+     * 20 1日主力買賣超(%)
+     * 21 5日主力買賣超(%)
+     * 22 10日主力買賣超(%)
+     * 23 20日主力買賣超(%)
+     * 24 上通道
+     * 25 下通道
+     * 26 外資買賣超
+     * 27 外資持股張數
+     * 28 外資持股比率
+     * 29 投信買賣超
+     * 30 投信持股張數
+     * 31 投信持股比率
+     * 32 自營商買賣超
+     * 33 自營商買賣超(自行買賣)
+     * 34 自營商買賣超(避險)
+     * 35 自營商持股張數
+     * 36 自營商持股比率
+     * 37 主力連買N日
+     * 38 投信連買N日
+     * 39 外資連買N日
+     * 40 自營商連買N日
+     * 41 成交量(張數)
+     * 42 20日成交均量(張數)
+     * 43 現股當沖成交量
+     * 44 資券相抵成交量
+     * 45 yoy
+     * 46 mom
+     * 47 融資維持率(%)
+     * 48 融資資使用率(%)
+     * 49 券資比
+     * 50 週轉率(%)
+     * 51 股價淨值比
+     * 52 融券回補日
+     * 53 主力成本
+     * 54 外資持股成本
+     * 55 投信持股成本
+     * 56 自營商持股成本
+     * 57 今日借卷賣出
+     * 58 借卷賣出餘額
+     * 59 證交所借卷餘額
+     * 60 卷商借卷餘額
+     * 61 有買賣分點總家數
+     * 62 當沖買進成交金額(千)
+     * 63 當沖賣出成交金額(千)
      *
      * @param Collection $data
      *
@@ -93,7 +114,7 @@ class Price extends Import
                     throw new \Exception('repeat count is not 2');
                 }
 
-                $d = $d->where('29', '');
+                $d = $d->where('52', '');
 
                 if ($d->isEmpty()) {
                     throw new \Exception($code . ' compulsory replenishment day is not empty');
@@ -110,7 +131,7 @@ class Price extends Import
             return true;
         }
 
-        $lastYearDate = Carbon::createFromFormat('Ymd', explode('~', $header[10])[0])->format('Y-m-d');
+        $lastYearDate = Carbon::createFromFormat('Ymd', explode('~', $header[8])[0])->format('Y-m-d');
         $existCodes = $this->repo->date($this->date)->pluck('code')->all();
         $saveTotal = 0;
         $noOpen = 0;
@@ -131,52 +152,73 @@ class Price extends Import
                     continue;
                 }
 
-                $volume = floor($value[30] / 1000);
-
                 $result = $this->repo->insert([
                     'code' => $code,
                     'date' => $this->date,
                     'open' => $value[2],
                     'close' => $value[3],
+                    'max' => $value[6],
+                    'min' => $value[7],
                     'increase' => $value[4],
-                    'max' => $value[5],
-                    'min' => $value[6],
-                    'year_stray' => round($value[7]),
-                    'season_stray' => round($value[8]),
-                    'month_stray' => round($value[9]),
-                    'last_year_max' => $value[10],
-                    'last_year_min' => $value[11],
+                    'amplitude' => $value[5],
+                    'last_year_max' => $value[8],
+                    'last_year_min' => $value[9],
                     'last_year_date' => $lastYearDate,
-                    'yoy' => round($value[12]),
-                    'mom' => round($value[13]),
-                    'financing_maintenance' => $this->round($value[14]),
-                    'financing_use' => $this->round($value[15]),
-                    'net_worth' => $this->round($value[16], 2),
-                    'bb_top' => $this->formatInt($value[21]),
-                    'bb_below' => $this->formatInt($value[22]),
-                    'month_ma' => $this->formatInt($value[23]),
-                    'main_1' => round($value[17]),
-                    'main_5' => round($value[18]),
-                    'main_10' => round($value[19]),
-                    'main_20' => round($value[20]),
-                    'foreign_investment_buy' => $value[39],
-                    'trust_buy' => $value[40],
-                    'self_employed_buy' => $value[41],
-                    'securities_ratio' => $this->round($value[24]),
-                    'compulsory_replenishment_day' => $this->formatDate($value[29]),
-                    'main_buy_n' => $value[25],
-                    'trust_buy_n' => $value[26],
-                    'foreign_investment_buy_n' => $value[27],
-                    'self_employed_buy_n' => $value[28],
-                    'volume' => $volume,
-                    'volume_20' => $value[38],
-                    'turnover' => $value[31],
-                    'main_cost' => $this->formatInt($value[32]),
-                    'trust_cost' => $this->formatInt($value[33]),
-                    'foreign_investment_cost' => $this->formatInt($value[34]),
-                    'self_employed_cost' => $this->formatInt($value[35]),
-                    'stock_trading_volume' => $this->formatInt($value[36]),
-                    'credit_trading_volume' => $this->formatInt($value[37]),
+                    '5ma' => $this->formatInt($value[10]),
+                    '10ma' => $this->formatInt($value[11]),
+                    '20ma' => $this->formatInt($value[12]),
+                    '60ma' => $this->formatInt($value[13]),
+                    '240ma' => $this->formatInt($value[14]),
+                    '5_stray' => $this->round($value[15], 2),
+                    '10_stray' => $this->round($value[16], 2),
+                    'month_stray' => $this->round($value[17], 2),
+                    'season_stray' => $this->round($value[18], 2),
+                    'year_stray' => $this->round($value[19], 2),
+                    'main_1' => round($value[20]),
+                    'main_5' => round($value[21]),
+                    'main_10' => round($value[22]),
+                    'main_20' => round($value[23]),
+                    'bb_top' => $this->formatInt($value[24]),
+                    'bb_below' => $this->formatInt($value[25]),
+                    'foreign_investment_buy' => $value[26],
+                    'foreign_investment_total' => $value[27],
+                    'foreign_investment_ratio' => $value[28],
+                    'trust_buy' => $value[29],
+                    'trust_total' => $value[30],
+                    'trust_ratio' => $value[31],
+                    'self_employed_buy' => $value[32],
+                    'self_employed_buy_by_self' => $value[33],
+                    'self_employed_buy_by_hedging' => $value[34],
+                    'self_employed_total' => $value[35],
+                    'self_employed_ratio' => $value[36],
+                    'main_buy_n' => $value[37],
+                    'trust_buy_n' => $value[38],
+                    'foreign_investment_buy_n' => $value[39],
+                    'self_employed_buy_n' => $value[40],
+                    'volume' => $value[41],
+                    'volume20' => $value[42],
+                    'stock_trading_volume' => $this->formatInt($value[43]),
+                    'credit_trading_volume' => $this->formatInt($value[44]),
+                    'yoy' => round($value[45]),
+                    'mom' => round($value[46]),
+                    'financing_maintenance' => $this->round($value[47]),
+                    'financing_use' => $this->formatInt($value[48]),
+                    'securities_ratio' => $this->round($value[49]),
+                    'turnover' => $value[50],
+                    'net_worth' => $this->round($value[51], 2),
+                    'compulsory_replenishment_day' => $this->formatDate($value[52]),
+                    'main_cost' => $this->formatInt($value[53]),
+                    'trust_cost' => $this->formatInt($value[54]),
+                    'foreign_investment_cost' => $this->formatInt($value[55]),
+                    'self_employed_cost' => $this->formatInt($value[56]),
+                    'sell_by_coupon' => $this->formatInt($value[57]),
+                    'borrowing_the_balance' => $this->formatInt($value[58]),
+                    'debit_balance' => $this->formatInt($value[59]) + $this->formatInt($value[60]),
+                    'stock_exchange_borrowing_balance' => $this->formatInt($value[59]),
+                    'volume_merchant_balance' => $this->formatInt($value[60]),
+                    'buy_sell_main_count' => $this->formatInt($value[61]),
+                    'buy_trading_amount' => $this->round($value[62]),
+                    'sell_trading_amount' => $this->round($value[63]),
                 ]);
 
                 if ($result) {
