@@ -80,6 +80,7 @@ class CreatePricesTable extends Migration
             $table->integer('debit_balance')->comment('借卷餘額 = 證交所借卷餘額 + 卷商借卷餘額');
             $table->integer('stock_exchange_borrowing_balance')->comment('證交所借卷餘額');
             $table->integer('volume_merchant_balance')->comment('卷商借卷餘額');
+            $table->smallInteger('buy_sell_point_diff')->comment('買賣分點家數差');
             $table->smallInteger('buy_sell_main_count')->comment('有買賣分點總家數');
             $table->integer('buy_trading_amount')->comment('當沖買進成交金額(千)');
             $table->integer('sell_trading_amount')->comment('當沖賣出成交金額(千)');
