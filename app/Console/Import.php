@@ -10,7 +10,7 @@ class Import extends Command
     /**
      * @var string
      */
-    protected $signature = 'stock:import {type} {date} {path}';
+    protected $signature = 'stock:import {type} {date} {path} {--year=}';
 
     public function handle()
     {
@@ -18,6 +18,6 @@ class Import extends Command
         $path = $this->argument("path");
         $type = $this->argument("type");
 
-        Facade::save($path, $date, $type);
+        Facade::save($path, $date, $type, $this->options());
     }
 }

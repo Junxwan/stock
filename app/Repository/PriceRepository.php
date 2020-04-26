@@ -15,4 +15,33 @@ class PriceRepository extends Repository
     {
         parent::__construct($model);
     }
+
+    /**
+     * @param string $code
+     * @param string $date
+     * @param array $values
+     *
+     * @return bool
+     */
+    public function update(string $code, string $date, array $values): bool
+    {
+        return $this->model->newQuery()
+            ->where('code', $code)
+            ->where('date', $date)
+            ->update($values);
+    }
+
+    /**
+     * @param string $code
+     * @param string $date
+     *
+     * @return \Illuminate\Database\Eloquent\Model|object|null
+     */
+    public function get(string $code, string $date)
+    {
+        return $this->model->newQuery()
+            ->where('code', $code)
+            ->where('date', $date)
+            ->first();
+    }
 }

@@ -17,6 +17,20 @@ class OpenDateRepository extends Repository
     }
 
     /**
+     * @param string $year
+     *
+     * @return \Illuminate\Database\Eloquent\Builder[]|\Illuminate\Database\Eloquent\Collection
+     */
+    public function year(string $year)
+    {
+        return $this->model->newQuery()
+            ->whereBetween('date', [$year . '-01-01', $year . '-12-31'])
+            ->where('open', true)
+            ->orderByDesc('date')
+            ->get();
+    }
+
+    /**
      * @param string $date
      *
      * @return \Illuminate\Database\Eloquent\Model|object|null

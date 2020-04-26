@@ -7,7 +7,9 @@
 namespace App\Service\Import;
 
 use App\Exceptions\StockException;
+use App\Repository\OpenDateRepository;
 use App\Repository\PointRepository;
+use App\Repository\PriceRepository;
 use App\Repository\StockRepository;
 use App\Service\Xlsx\Xlsx;
 use Illuminate\Console\Concerns\InteractsWithIO;
@@ -48,6 +50,16 @@ abstract class Import
     protected $pointRepo;
 
     /**
+     * @var OpenDateRepository
+     */
+    protected $openDateRepo;
+
+    /**
+     * @var PriceRepository
+     */
+    protected $priceRepo;
+
+    /**
      * import constructor.
      *
      * @param Xlsx $xlsx
@@ -62,6 +74,8 @@ abstract class Import
 
         $this->stockRepo = app(StockRepository::class);
         $this->pointRepo = app(PointRepository::class);
+        $this->openDateRepo = app(OpenDateRepository::class);
+        $this->priceRepo = app(PriceRepository::class);
 
         $this->output = app()->make(
             OutputStyle::class, ['input' => new ArgvInput(), 'output' => new ConsoleOutput()]

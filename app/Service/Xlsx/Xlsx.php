@@ -115,12 +115,20 @@ abstract class Xlsx
      *
      * @return string
      */
-    protected abstract function getDataPath(): string;
+    protected function getDataPath(): string
+    {
+        return $this->path . '\\' . $this->name();
+    }
 
     /**
      * 檔案簡稱
+     *
+     * @return string
      */
-    public abstract function name(): string;
+    public function name(): string
+    {
+        return $this->year . '.xlsx';
+    }
 
     /**
      * @return string
