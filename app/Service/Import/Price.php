@@ -91,9 +91,10 @@ class Price extends Import
      * 58 借卷賣出餘額
      * 59 證交所借卷餘額
      * 60 卷商借卷餘額
-     * 61 有買賣分點總家數
-     * 62 當沖買進成交金額(千)
-     * 63 當沖賣出成交金額(千)
+     * 61 買賣分點家數差
+     * 62 有買賣分點總家數
+     * 63 當沖買進成交金額(千)
+     * 64 當沖賣出成交金額(千)
      *
      * @param Collection $data
      *
@@ -216,9 +217,10 @@ class Price extends Import
                     'debit_balance' => $this->formatInt($value[59]) + $this->formatInt($value[60]),
                     'stock_exchange_borrowing_balance' => $this->formatInt($value[59]),
                     'volume_merchant_balance' => $this->formatInt($value[60]),
-                    'buy_sell_main_count' => $this->formatInt($value[61]),
-                    'buy_trading_amount' => $this->round($value[62]),
-                    'sell_trading_amount' => $this->round($value[63]),
+                    'buy_sell_point_diff' => $this->formatInt($value[61]),
+                    'buy_sell_main_count' => $this->formatInt($value[62]),
+                    'buy_trading_amount' => $this->round($value[63]),
+                    'sell_trading_amount' => $this->round($value[64]),
                 ]);
 
                 if ($result) {
