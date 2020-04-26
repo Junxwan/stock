@@ -12,7 +12,7 @@ class OpenDate extends Import
     /**
      * @var OpenDateRepository
      */
-    private $openDateRepo;
+    protected $openDateRepo;
 
     /**
      * OpenDate constructor.
@@ -40,7 +40,7 @@ class OpenDate extends Import
             $insert[] = [
                 'date' => $d->toDateString(),
                 'week' => $d->weekday(),
-                'open' => $d->isWeekday(),
+                'open' => true,
             ];
         }
 
