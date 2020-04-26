@@ -1,5 +1,9 @@
 <?php
 
+/**
+ * 匯入以年為單位的資料
+ */
+
 namespace App\Service\Import\Year;
 
 use App\Exceptions\StockException;
@@ -27,16 +31,16 @@ abstract class Import extends Base
         unset($data[0]);
 
         $insertAllTotal = 0;
-        $updateTotal = 0;
         $updateAllTotal = 0;
         $blankTotal = 0;
         $blankAllTotal = 0;
 
-        foreach ($data as $value) {
+        foreach ($data as $c => $value) {
             $code = $value[0];
             $p = array_slice($value, 2);
             $prices = $this->prices($code, $this->year);
             $insert = [];
+            $update = [];
 
             foreach ($p as $i => $v) {
                 if ($v == '') {
@@ -44,7 +48,6 @@ abstract class Import extends Base
                     continue;
                 }
 
-                $result = true;
                 $d = $date[$i];
 
                 if ($prices->get($d) == null) {
@@ -54,17 +57,11 @@ abstract class Import extends Base
                         $this->key() => $v,
                     ]));
                 } elseif ($prices->get($d)[$this->key()] != $v) {
-                    $result = $this->priceRepo->update($code, $d, [
+                    $update[] = [
+                        'code' => $code,
+                        'date' => $d,
                         $this->key() => $v,
-                    ]);
-
-                    if ($result) {
-                        $updateTotal++;
-                    }
-                }
-
-                if (! $result) {
-                    throw new StockException($code, 'update error for ' . $d);
+                    ];
                 }
             }
 
@@ -79,31 +76,25 @@ abstract class Import extends Base
                 $insertTotal = count($insert);
             }
 
-            $this->info('code: ' . $code . ' total: ' . count($p) . ' insert: ' . $insertTotal . ' update: ' . $updateTotal . ' blank: ' . $blankTotal);
+            $updateTotal = 0;
+            if (count($update) > 0) {
+                $updateTotal = $this->priceRepo->batchUpdate($code, 'open', $update);
+
+                if ($updateTotal <= 0) {
+                    throw new StockException($code, 'update error for ' . $d);
+                }
+            }
+
+            $this->info('code: ' . $code . ' total: ' . count($p) . ' insert: ' . $insertTotal . ' update: ' . $updateTotal . ' blank: ' . $blankTotal . ' index: ' . ($c + 1));
 
             $insertAllTotal += $insertTotal;
             $updateAllTotal += $updateTotal;
             $blankAllTotal += $blankTotal;
 
-            $updateTotal = 0;
             $blankTotal = 0;
         }
 
-        $this->info('total: ' . count($date) * $data->count() . ' insert: ' . $insertAllTotal . ' update: ' . $updateAllTotal . ' blank: ' . $blankAllTotal);
-
-        $this->info('status check');
-
-        foreach ($data as $value) {
-            $code = $value[0];
-            $p = array_filter(array_slice($value, 2));
-            $prices = $this->prices($code, $this->year)->count();
-
-            if (count($p) != $prices) {
-                throw new StockException($code, 'count have diff table: ' . $prices . ' xlsx: ' . count($p));
-            }
-        }
-
-        $this->info('check ok');
+        $this->info($this->year . ' total: ' . count($date) * $data->count() . ' insert: ' . $insertAllTotal . ' update: ' . $updateAllTotal . ' blank: ' . $blankAllTotal);
 
         return true;
     }
@@ -117,8 +108,8 @@ abstract class Import extends Base
     private function prices(string $code, string $year)
     {
         $data = collect();
-        foreach ($this->priceRepo->year($code, $year) as $value) {
-            $data->put($value->date, $value);
+        foreach ($this->priceRepo->getYear($code, $year) as $value) {
+            $data->put($value->date->toDateString(), $value);
         }
 
         return $data;
