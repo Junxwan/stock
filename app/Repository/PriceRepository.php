@@ -44,4 +44,18 @@ class PriceRepository extends Repository
             ->where('date', $date)
             ->first();
     }
+
+    /**
+     * @param string $code
+     * @param string $year
+     *
+     * @return \Illuminate\Database\Eloquent\Collection
+     */
+    public function year(string $code, string $year)
+    {
+        return $this->model->newQuery()
+            ->where('code', $code)
+            ->whereBetween('date', [$year . '-01-01', $year . '-12-31'])
+            ->get();
+    }
 }
