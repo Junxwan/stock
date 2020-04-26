@@ -49,14 +49,15 @@ abstract class Import extends Base
                 }
 
                 $d = $date[$i];
+                $price = $prices->get($d);
 
-                if ($prices->get($d) == null) {
+                if ($price == null) {
                     $insert[] = $this->new(collect([
                         'code' => $code,
                         'date' => $d,
                         $this->key() => $v,
                     ]));
-                } elseif ($prices->get($d)[$this->key()] != $v) {
+                } elseif ($price[$this->key()] != $v) {
                     $update[] = [
                         'code' => $code,
                         'date' => $d,
@@ -85,7 +86,13 @@ abstract class Import extends Base
                 }
             }
 
-            $this->info('code: ' . $code . ' total: ' . count($p) . ' insert: ' . $insertTotal . ' update: ' . $updateTotal . ' blank: ' . $blankTotal . ' index: ' . ($c + 1));
+            $this->info(
+                'code:' . $code .
+                ' total:' . count($p) .
+                ' insert:' . $insertTotal .
+                ' update:' . $updateTotal .
+                ' blank:' . $blankTotal
+            );
 
             $insertAllTotal += $insertTotal;
             $updateAllTotal += $updateTotal;
