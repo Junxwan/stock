@@ -4,7 +4,6 @@ namespace App\Service\Xlsx;
 
 use Illuminate\Console\Concerns\InteractsWithIO;
 use Illuminate\Console\OutputStyle;
-use Illuminate\Support\Arr;
 use Illuminate\Support\Carbon;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use Symfony\Component\Console\Input\ArgvInput;
@@ -150,7 +149,7 @@ abstract class Xlsx
                 $data->put($k, $d);
             }
         } else {
-            $data = collect(Arr::first($json));
+            $data = collect($json);
             foreach ($this->removeIndexs as $index) {
                 unset($data[$index]);
             }
