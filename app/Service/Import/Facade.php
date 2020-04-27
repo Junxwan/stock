@@ -30,6 +30,7 @@ class Facade
             'xlsx' => app($xlsxNamespace . $type, [
                 'path' => $path,
                 'date' => $date,
+                'param' => $parameter,
             ]),
         ]);
 

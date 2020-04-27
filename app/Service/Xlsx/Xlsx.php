@@ -4,6 +4,7 @@ namespace App\Service\Xlsx;
 
 use Illuminate\Console\Concerns\InteractsWithIO;
 use Illuminate\Console\OutputStyle;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Carbon;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use Symfony\Component\Console\Input\ArgvInput;
@@ -34,16 +35,23 @@ abstract class Xlsx
     protected $removeIndexs = [];
 
     /**
+     * @var array
+     */
+    private $param;
+
+    /**
      * Xlsx constructor.
      *
      * @param string $path
      * @param string $date
+     * @param array $param
      *
      * @throws \Illuminate\Contracts\Container\BindingResolutionException
      */
-    public function __construct(string $path, string $date = '')
+    public function __construct(string $path, string $date = '', array $param = [])
     {
         $this->path = $path;
+        $this->param = $param;
 
         if ($date == 'now') {
             $this->date = date('Y-m-d');
@@ -71,8 +79,22 @@ abstract class Xlsx
      */
     public function getData()
     {
-        $spreadsheet = $this->getSpreadsheet();
+        if (! $this->isJson()) {
+            return $this->readSpreadsheet();
+        }
+
+        return $this->readJson();
+    }
+
+    /**
+     * @return \Illuminate\Support\Collection
+     * @throws \PhpOffice\PhpSpreadsheet\Exception
+     * @throws \PhpOffice\PhpSpreadsheet\Reader\Exception
+     */
+    private function readSpreadsheet()
+    {
         $index = $this->index();
+        $spreadsheet = $this->getSpreadsheet();
 
         if (is_array($index)) {
             $data = collect();
@@ -93,6 +115,48 @@ abstract class Xlsx
 
             // 最後一筆資料如果是統計筆數則移除
             if ($data->last()[1] == null) {
+                $data->pop();
+            }
+        }
+
+        return $data;
+    }
+
+    /**
+     * @return \Illuminate\Support\Collection
+     * @throws \Exception
+     */
+    private function readJson()
+    {
+        $index = $this->index();
+        $jsonFile = file_get_contents($this->getDataPath());
+
+        if ($jsonFile == '') {
+            throw new \Exception($this->getDataPath() . ' is not exist');
+        }
+
+        $json = json_decode($jsonFile, true);
+
+        if (is_array($index)) {
+            $data = collect();
+
+            foreach ($index as $k) {
+                $d = $json[$k];
+
+                foreach ($this->removeIndexs as $c) {
+                    unset($d[$c]);
+                }
+
+                $data->put($k, $d);
+            }
+        } else {
+            $data = collect(Arr::first($json));
+            foreach ($this->removeIndexs as $index) {
+                unset($data[$index]);
+            }
+
+            // 最後一筆資料如果是統計筆數則移除
+            if (count($data->last()) == 1) {
                 $data->pop();
             }
         }
@@ -127,6 +191,10 @@ abstract class Xlsx
      */
     public function name(): string
     {
+        if ($this->isJson()) {
+            return $this->year . '.json';
+        }
+
         return $this->year . '.xlsx';
     }
 
@@ -154,5 +222,14 @@ abstract class Xlsx
     protected function index()
     {
         return 0;
+    }
+
+    /**
+     *
+     * @return bool
+     */
+    protected function isJson()
+    {
+        return isset($this->param['json']) && $this->param['json'];
     }
 }
