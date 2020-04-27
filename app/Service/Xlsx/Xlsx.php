@@ -79,21 +79,46 @@ abstract class Xlsx
     public function getData()
     {
         if (! $this->isJson()) {
-            return $this->readSpreadsheet();
+            return $this->readSpreadsheet($this->getDataPath());
         }
 
-        return $this->readJson();
+        return $this->readJson($this->getDataPath());
     }
 
     /**
+     * @param array $name
+     *
+     * @return \Illuminate\Support\Collection
+     */
+    public function getAllData(array $names)
+    {
+        $data = collect();
+        foreach ($names as $n) {
+            $path = $this->path . '\\' . $n . '\\' . $this->name();
+
+            if ($this->isJson()) {
+                $d = $this->readJson($path);
+            } else {
+                $d = $this->readSpreadsheet($path);
+            }
+
+            $data->put($n, $d);
+        }
+
+        return $data;
+    }
+
+    /**
+     * @param string $path
+     *
      * @return \Illuminate\Support\Collection
      * @throws \PhpOffice\PhpSpreadsheet\Exception
      * @throws \PhpOffice\PhpSpreadsheet\Reader\Exception
      */
-    private function readSpreadsheet()
+    private function readSpreadsheet(string $path)
     {
         $index = $this->index();
-        $spreadsheet = $this->getSpreadsheet();
+        $spreadsheet = $this->getSpreadsheet($path);
 
         if (is_array($index)) {
             $data = collect();
@@ -122,16 +147,18 @@ abstract class Xlsx
     }
 
     /**
+     * @param string $path
+     *
      * @return \Illuminate\Support\Collection
      * @throws \Exception
      */
-    private function readJson()
+    private function readJson(string $path)
     {
         $index = $this->index();
-        $jsonFile = file_get_contents($this->getDataPath());
+        $jsonFile = file_get_contents($path);
 
         if ($jsonFile == '') {
-            throw new \Exception($this->getDataPath() . ' is not exist');
+            throw new \Exception($path . ' is not exist');
         }
 
         $json = json_decode($jsonFile, true);
@@ -164,13 +191,15 @@ abstract class Xlsx
     }
 
     /**
+     * @param string $path
+     *
      * @return \PhpOffice\PhpSpreadsheet\Spreadsheet
      * @throws \PhpOffice\PhpSpreadsheet\Reader\Exception
      */
-    protected function getSpreadsheet()
+    protected function getSpreadsheet(string $path)
     {
         $this->info("read " . $this->name() . ' ....');
-        return IOFactory::load($this->getDataPath());
+        return IOFactory::load($path);
     }
 
     /**
