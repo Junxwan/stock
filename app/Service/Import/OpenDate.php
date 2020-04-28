@@ -35,7 +35,7 @@ class OpenDate extends Import
      */
     protected function insert(Collection $data): bool
     {
-        foreach ($data->first() as $date) {
+        foreach (array_slice($data->first(), 2) as $date) {
             $d = Carbon::createFromFormat('Ymd', $date);
             $insert[] = [
                 'date' => $d->toDateString(),
