@@ -76,10 +76,10 @@ class CreatePricesTable extends Migration
             $table->decimal('trust_cost', self::PRICE_TOTAL)->comment('投信成本');
             $table->decimal('self_employed_cost', self::PRICE_TOTAL)->comment('自營商成本');
             $table->integer('sell_by_coupon')->comment('今日借卷賣出');
-            $table->integer('borrowing_the_balance')->comment('借卷賣出餘額');
-            $table->integer('debit_balance')->comment('借卷餘額 = 證交所借卷餘額 + 卷商借卷餘額');
-            $table->integer('stock_exchange_borrowing_balance')->comment('證交所借卷餘額');
-            $table->integer('volume_merchant_balance')->comment('卷商借卷餘額');
+            $table->integer('borrowing_the_balance')->comment('借卷賣出餘額(累積賣出)');
+            $table->integer('stock_exchange_borrowing_balance')->comment('證交所借卷餘額(累積借出)');
+            $table->integer('volume_merchant_balance')->comment('卷商借卷餘額(累積借出)');
+            $table->integer('debit_balance')->comment('借卷餘額(累積已借出) = 證交所借卷餘額 + 卷商借卷餘額');
             $table->smallInteger('buy_sell_point_diff')->comment('買賣分點家數差');
             $table->smallInteger('buy_sell_main_count')->comment('有買賣分點總家數');
             $table->integer('buy_trading_amount')->comment('當沖買進成交金額(千)');
