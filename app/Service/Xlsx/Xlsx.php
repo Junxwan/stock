@@ -115,7 +115,7 @@ abstract class Xlsx
      * @throws \PhpOffice\PhpSpreadsheet\Exception
      * @throws \PhpOffice\PhpSpreadsheet\Reader\Exception
      */
-    private function readSpreadsheet(string $path)
+    protected function readSpreadsheet(string $path)
     {
         $index = $this->index();
         $spreadsheet = $this->getSpreadsheet($path);
@@ -152,7 +152,7 @@ abstract class Xlsx
      * @return \Illuminate\Support\Collection
      * @throws \Exception
      */
-    private function readJson(string $path)
+    protected function readJson(string $path)
     {
         $index = $this->index();
         $jsonFile = file_get_contents($path);

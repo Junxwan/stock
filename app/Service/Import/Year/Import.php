@@ -10,9 +10,55 @@ use App\Exceptions\StockException;
 use \App\Service\Import\Import as Base;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
+use App\Service\Xlsx\Xlsx;
 
 abstract class Import extends Base
 {
+    /**
+     * @var Collection
+     */
+    protected $openDate;
+
+    /**
+     * @var array
+     */
+    private $rang = [
+        '5ma' => 5,
+        '10ma' => 10,
+        '20ma' => 20,
+        '60ma' => 60,
+        '240ma' => 240,
+    ];
+
+    /**
+     * Import constructor.
+     *
+     * @param Xlsx $xlsx
+     *
+     * @throws \Illuminate\Contracts\Container\BindingResolutionException
+     */
+    public function __construct(Xlsx $xlsx)
+    {
+        parent::__construct($xlsx);
+        $this->init();
+    }
+
+    /**
+     * 初始化
+     */
+    private function init()
+    {
+        $date = [];
+        foreach ($this->openDateRepo->all()->pluck('date') as $value) {
+            $date[] = [
+                'date' => $value,
+                't' => (int)Carbon::createFromFormat('Y-m-d', $value)->format('Ymd'),
+            ];
+        }
+
+        $this->openDate = collect($date);
+    }
+
     /**
      * @param Collection $data
      *
@@ -21,90 +67,115 @@ abstract class Import extends Base
      */
     protected function insert(Collection $data): bool
     {
-        $date = $this->date($data);
-        $diff = array_diff_assoc($date->all(), $this->openDateRepo->year($this->year)->pluck('date')->all());
-
-        if (count($diff) > 0) {
-            throw new \Exception('date diff: [' . implode(',', $diff) . ']');
+        $date = collect();
+        foreach ($data as $key => $value) {
+            if (isset($this->rang[$key])) {
+                $date->put($key, $this->rangDate($value, $this->rang[$key]));
+            } elseif (in_array($key, ['yoy', 'mom'])) {
+                $date->put($key, $this->yearMonth($value));
+            } elseif ($key == 'compulsory_replenishment_day') {
+                $date->put($key, $this->year($value));
+            } else {
+                $date->put($key, $this->date($value));
+            }
         }
 
-        unset($data[0]);
-
-        $insertAllTotal = 0;
-        $updateAllTotal = 0;
-        $blankTotal = 0;
-        $blankAllTotal = 0;
-
-        foreach ($data as $c => $value) {
-            $code = $value[0];
-            $p = array_slice($value, 2);
-            $prices = $this->prices($code, $this->year);
-            $insert = [];
-            $update = [];
-
-            foreach ($p as $i => $v) {
-                if ($v == '') {
-                    $blankTotal++;
-                    continue;
-                }
-
-                $d = $date[$i];
-                $price = $prices->get($d);
-
-                if ($price == null) {
-                    $insert[] = $this->new(collect([
-                        'code' => $code,
-                        'date' => $d,
-                        $this->key() => $v,
-                    ]));
-                } elseif ($price[$this->key()] != $v) {
-                    $update[] = [
-                        'code' => $code,
-                        'date' => $d,
-                        $this->key() => $v,
-                    ];
-                }
-            }
-
-            $insertTotal = 0;
-            if (count($insert) > 0) {
-                $result = $this->priceRepo->batchInsert($insert);
-
-                if (! $result) {
-                    throw new StockException($code, 'insert error for ' . $d);
-                }
-
-                $insertTotal = count($insert);
-            }
-
-            $updateTotal = 0;
-            if (count($update) > 0) {
-                $updateTotal = $this->priceRepo->batchUpdate($code, 'open', $update);
-
-                if ($updateTotal <= 0) {
-                    throw new StockException($code, 'update error for ' . $d);
-                }
-            }
-
-            $this->info(
-                'code:' . $code .
-                ' total:' . count($p) .
-                ' insert:' . $insertTotal .
-                ' update:' . $updateTotal .
-                ' blank:' . $blankTotal
-            );
-
-            $insertAllTotal += $insertTotal;
-            $updateAllTotal += $updateTotal;
-            $blankAllTotal += $blankTotal;
-
-            $blankTotal = 0;
-        }
-
-        $this->info($this->year . ' total: ' . count($date) * $data->count() . ' insert: ' . $insertAllTotal . ' update: ' . $updateAllTotal . ' blank: ' . $blankAllTotal);
-
-        return true;
+        return false;
     }
+
+
+    /**
+     * @param Collection $data
+     *
+     * @return bool
+     * @throws StockException
+     */
+    //    protected function insert(Collection $data): bool
+    //    {
+    //        $date = $this->date($data);
+    //        $diff = array_diff_assoc($date->all(), $this->openDateRepo->year($this->year)->pluck('date')->all());
+    //
+    //        if (count($diff) > 0) {
+    //            throw new \Exception('date diff: [' . implode(',', $diff) . ']');
+    //        }
+    //
+    //        unset($data[0]);
+    //
+    //        $insertAllTotal = 0;
+    //        $updateAllTotal = 0;
+    //        $blankTotal = 0;
+    //        $blankAllTotal = 0;
+    //
+    //        foreach ($data as $c => $value) {
+    //            $code = $value[0];
+    //            $p = array_slice($value, 2);
+    //            $prices = $this->prices($code, $this->year);
+    //            $insert = [];
+    //            $update = [];
+    //
+    //            foreach ($p as $i => $v) {
+    //                if ($v == '') {
+    //                    $blankTotal++;
+    //                    continue;
+    //                }
+    //
+    //                $d = $date[$i];
+    //                $price = $prices->get($d);
+    //
+    //                if ($price == null) {
+    //                    $insert[] = $this->new(collect([
+    //                        'code' => $code,
+    //                        'date' => $d,
+    //                        $this->key() => $v,
+    //                    ]));
+    //                } elseif ($price[$this->key()] != $v) {
+    //                    $update[] = [
+    //                        'code' => $code,
+    //                        'date' => $d,
+    //                        $this->key() => $v,
+    //                    ];
+    //                }
+    //            }
+    //
+    //            $insertTotal = 0;
+    //            if (count($insert) > 0) {
+    //                $result = $this->priceRepo->batchInsert($insert);
+    //
+    //                if (! $result) {
+    //                    throw new StockException($code, 'insert error for ' . $d);
+    //                }
+    //
+    //                $insertTotal = count($insert);
+    //            }
+    //
+    //            $updateTotal = 0;
+    //            if (count($update) > 0) {
+    //                $updateTotal = $this->priceRepo->batchUpdate($code, 'open', $update);
+    //
+    //                if ($updateTotal <= 0) {
+    //                    throw new StockException($code, 'update error for ' . $d);
+    //                }
+    //            }
+    //
+    //            $this->info(
+    //                'code:' . $code .
+    //                ' total:' . count($p) .
+    //                ' insert:' . $insertTotal .
+    //                ' update:' . $updateTotal .
+    //                ' blank:' . $blankTotal
+    //            );
+    //
+    //            $insertAllTotal += $insertTotal;
+    //            $updateAllTotal += $updateTotal;
+    //            $blankAllTotal += $blankTotal;
+    //
+    //            $blankTotal = 0;
+    //        }
+    //
+    //        $this->info($this->year . ' total: ' . count($date) * $data->count() . ' insert: ' . $insertAllTotal . ' update: ' . $updateAllTotal . ' blank: ' . $blankAllTotal);
+    //
+    //        return true;
+    //    }
 
     /**
      * @param string $code
@@ -205,14 +276,91 @@ abstract class Import extends Base
      * @param Collection $data
      *
      * @return Collection
+     * @throws \Exception
      */
     private function date(Collection $data)
     {
+        return $this->parserDate($data, function ($header) {
+            $ds = explode(' ', $header);
+            return Carbon::createFromFormat('Ymd', $ds[0]);
+        });
+    }
+
+    /**
+     * @param Collection $data
+     *
+     * @return Collection
+     * @throws \Exception
+     */
+    private function yearMonth(Collection $data)
+    {
+        return $this->parserDate($data, function ($header) {
+            $ds = explode(' ', $header);
+            return Carbon::createFromFormat('Ym', $ds[0]);
+        });
+    }
+
+    /**
+     * @param Collection $data
+     *
+     * @return Collection
+     * @throws \Exception
+     */
+    private function year(Collection $data)
+    {
+        return $this->parserDate($data, function ($header) {
+            $ds = explode(' ', $header);
+            return Carbon::createFromFormat('Y', $ds[0]);
+        });
+    }
+
+    /**
+     * @param Collection $data
+     * @param int $rang
+     * @param bool $check
+     *
+     * @return Collection
+     * @throws \Exception
+     */
+    private function rangDate(Collection $data, int $rang, bool $check = true)
+    {
+        return $this->parserDate($data, function ($header) use ($rang, $check) {
+            $ds = explode('~', substr($header, 0, 17));
+
+            if ($check) {
+                $r = $this->openDate->where('t', '<=', $ds[1])->slice(0, $rang);
+
+                if ($r->count() != $rang) {
+                    throw new \Exception('header date rang is not ' . $rang . ' ma');
+                }
+
+                if ($r->first()['t'] != $ds[1]) {
+                    throw new \Exception('header end date is not ' . $rang . ' ma for [' . $header . ']');
+                }
+
+                if ($r->last()['t'] != $ds[0]) {
+                    throw new \Exception('header end date is not ' . $rang . ' ma for [' . $header . ']');
+                }
+            }
+
+            return Carbon::createFromFormat('Ymd', $ds[1]);
+        });
+    }
+
+    /**
+     * 從header解析日期
+     *
+     * @param Collection $data
+     * @param callable|null $callback
+     *
+     * @return Collection
+     * @throws \Exception
+     */
+    protected function parserDate(Collection $data, callable $callback)
+    {
         $date = collect();
         foreach (array_slice($data->get(0), 2) as $header) {
-            $ds = explode(' ', $header);
-            $d = Carbon::createFromFormat('Ymd', $ds[0]);
-            $date->add($d->toDateString());
+            $date->add($callback($header)->toDateString());
         }
 
         $unique = array_unique($date->all());

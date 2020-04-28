@@ -43,4 +43,15 @@ class OpenDateRepository extends Repository
             ->orderByDesc('date')
             ->first();
     }
+
+    /**
+     * @return \Illuminate\Database\Eloquent\Collection
+     */
+    public function all()
+    {
+        return $this->model->newQuery()
+            ->where('open', true)
+            ->orderByDesc('date')
+            ->get();
+    }
 }

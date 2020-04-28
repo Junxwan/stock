@@ -6,6 +6,9 @@ use App\Service\Xlsx\Xlsx;
 
 class All extends Xlsx
 {
+    /**
+     * @var string[]
+     */
     private $dir = [
         'open', // 開盤價
         'close', // 收盤價
@@ -55,6 +58,31 @@ class All extends Xlsx
         'volume', // 成交量(張)
         'stock_trading_volume', // 現股當沖交易量
         'credit_trading_volume', // 資卷當沖交易量
+        'turnover', // 週轉率(%)
+        'buy_trading_amount', // 當沖買進成交金額(千)
+        'sell_trading_amount', // 當沖賣出成交金額(千)
+
+        'yoy', // yoy%
+        'mom', // mom%
+
+        'financing_maintenance', // 融資維持率(%)
+        'financing_use', // 融資使用率
+        'securities_ratio', // 券資比
+
+        'net_worth', // 股價淨值比
+
+        'main_cost', // 主力成本
+        'foreign_investment_cost', // 外資成本
+        'trust_cost', // 投信成本
+        'self_employed_cost', // 自營商成本
+
+        'sell_by_coupon', // 今日借卷賣出
+        'borrowing_the_balance', // 借卷賣出餘額(累積賣出)
+        'stock_exchange_borrowing_balance', // 證交所借卷餘額(累積借出)
+        'volume_merchant_balance', // 卷商借卷餘額(累積借出)
+
+        'buy_sell_point_diff', // 買賣分點家數差
+        'buy_sell_main_count', // 有買賣分點總家數
     ];
 
     /**
@@ -62,6 +90,27 @@ class All extends Xlsx
      */
     public function getData()
     {
-        return $this->getAllData($this->dir);
+        $data = $this->getAllData($this->dir);
+        $data->put('compulsory_replenishment_day', $this->readCompulsoryReplenishmentDay());
+
+        return $data;
+    }
+
+    /**
+     * 融券回補日
+     *
+     * @return \Illuminate\Support\Collection
+     * @throws \PhpOffice\PhpSpreadsheet\Exception
+     * @throws \PhpOffice\PhpSpreadsheet\Reader\Exception
+     */
+    private function readCompulsoryReplenishmentDay()
+    {
+        $path = $this->path . '\compulsory_replenishment_day\compulsory_replenishment_day';
+
+        if ($this->isJson()) {
+            return $this->readJson($path . '.json');
+        }
+
+        return $this->readSpreadsheet($path . '.xlsx');
     }
 }
