@@ -260,4 +260,14 @@ abstract class Xlsx
     {
         return isset($this->param['json']) && $this->param['json'];
     }
+
+    /**
+     * @param string $key
+     *
+     * @return mixed
+     */
+    public function getParam(string $key)
+    {
+        return $this->param[$key];
+    }
 }

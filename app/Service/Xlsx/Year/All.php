@@ -62,9 +62,6 @@ class All extends Xlsx
         'buy_trading_amount', // 當沖買進成交金額(千)
         'sell_trading_amount', // 當沖賣出成交金額(千)
 
-        'yoy', // yoy%
-        'mom', // mom%
-
         'financing_maintenance', // 融資維持率(%)
         'financing_use', // 融資使用率
         'securities_ratio', // 券資比
@@ -90,27 +87,6 @@ class All extends Xlsx
      */
     public function getData()
     {
-        $data = $this->getAllData($this->dir);
-        $data->put('compulsory_replenishment_day', $this->readCompulsoryReplenishmentDay());
-
-        return $data;
-    }
-
-    /**
-     * 融券回補日
-     *
-     * @return \Illuminate\Support\Collection
-     * @throws \PhpOffice\PhpSpreadsheet\Exception
-     * @throws \PhpOffice\PhpSpreadsheet\Reader\Exception
-     */
-    private function readCompulsoryReplenishmentDay()
-    {
-        $path = $this->path . '\compulsory_replenishment_day\compulsory_replenishment_day';
-
-        if ($this->isJson()) {
-            return $this->readJson($path . '.json');
-        }
-
-        return $this->readSpreadsheet($path . '.xlsx');
+        return $this->getAllData($this->dir);
     }
 }

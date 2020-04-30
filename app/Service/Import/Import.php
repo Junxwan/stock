@@ -27,7 +27,7 @@ abstract class Import
     /**
      * @var Xlsx
      */
-    private $xlsx;
+    protected $xlsx;
 
     /**
      * @var string
@@ -210,7 +210,7 @@ abstract class Import
      */
     protected function round($value, int $precision = 0)
     {
-        return round($this->formatInt($value), $precision);
+        return round($this->format($value), $precision);
     }
 
     /**
@@ -230,9 +230,9 @@ abstract class Import
     /**
      * @param $value
      *
-     * @return int
+     * @return mixed
      */
-    protected function formatInt($value)
+    protected function format($value)
     {
         return $value == "" ? 0 : $value;
     }

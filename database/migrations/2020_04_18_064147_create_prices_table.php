@@ -23,8 +23,8 @@ class CreatePricesTable extends Migration
             $table->decimal('close', self::PRICE_TOTAL)->comment('收盤價');
             $table->decimal('max', self::PRICE_TOTAL)->comment('最高價');
             $table->decimal('min', self::PRICE_TOTAL)->comment('最低價');
-            $table->decimal('increase', 4)->comment('漲幅(%)');
-            $table->decimal('amplitude', 4)->comment('振幅(%)');
+            $table->decimal('increase', 6)->comment('漲幅(%)');
+            $table->decimal('amplitude', 6)->comment('振幅(%)');
             $table->decimal('last_year_max', self::PRICE_TOTAL)->comment('最近一年(250天)最高價');
             $table->decimal('last_year_min', self::PRICE_TOTAL)->comment('最近一年(250天)最低價');
             $table->date('last_year_date')->nullable()->comment('最近一年(250天)日期');
@@ -33,11 +33,11 @@ class CreatePricesTable extends Migration
             $table->decimal('20ma', self::PRICE_TOTAL)->comment('20日均線');
             $table->decimal('60ma', self::PRICE_TOTAL)->comment('60日均線');
             $table->decimal('240ma', self::PRICE_TOTAL)->comment('240日均線');
-            $table->decimal('5stray', 5)->comment('股價乖離5日均線%');
-            $table->decimal('10stray', 5)->comment('股價乖離10日均線%');
-            $table->decimal('month_stray', 5)->comment('股價乖離月線%');
-            $table->decimal('season_stray', 5)->comment('股價乖離季線%');
-            $table->decimal('year_stray', 5)->comment('股價乖離年線%');
+            $table->decimal('5stray')->comment('股價乖離5日均線%');
+            $table->decimal('10stray')->comment('股價乖離10日均線%');
+            $table->decimal('month_stray')->comment('股價乖離月線%');
+            $table->decimal('season_stray')->comment('股價乖離季線%');
+            $table->decimal('year_stray')->comment('股價乖離年線%');
             $table->decimal('main1', 5)->comment('1日主力買賣超(%)');
             $table->decimal('main5', 5)->comment('5日主力買賣超(%)');
             $table->decimal('main10', 5)->comment('10日主力買賣超(%)');
@@ -63,8 +63,6 @@ class CreatePricesTable extends Migration
             $table->integer('volume20')->comment('20日成交均量(張)');
             $table->integer('stock_trading_volume')->comment('現股當沖交易量');
             $table->integer('credit_trading_volume')->comment('資卷當沖交易量');
-            $table->integer('yoy')->comment('yoy%');
-            $table->integer('mom')->comment('mom%');
             $table->decimal('financing_maintenance')->comment('融資維持率(%)');
             $table->decimal('financing_use', 6)->comment('融資使用率');
             $table->decimal('securities_ratio')->comment('券資比');
@@ -80,8 +78,8 @@ class CreatePricesTable extends Migration
             $table->integer('volume_merchant_balance')->comment('卷商借卷餘額(累積借出)');
             $table->smallInteger('buy_sell_point_diff')->comment('買賣分點家數差');
             $table->smallInteger('buy_sell_main_count')->comment('有買賣分點總家數');
-            $table->decimal('buy_trading_amount')->comment('當沖買進成交金額(千)');
-            $table->decimal('sell_trading_amount')->comment('當沖賣出成交金額(千)');
+            $table->decimal('buy_trading_amount', 12)->comment('當沖買進成交金額(千)');
+            $table->decimal('sell_trading_amount', 12)->comment('當沖賣出成交金額(千)');
 
             $table->index('date');
             $table->foreign('code')->references('code')->on('stocks');
