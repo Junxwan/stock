@@ -144,6 +144,19 @@ abstract class Import extends Base
     }
 
     /**
+     * @return Collection
+     */
+    protected function stocks()
+    {
+        $data = collect();
+        foreach ($this->stockRepo->all() as $value) {
+            $data->put($value->code, $value);
+        }
+
+        return $data;
+    }
+
+    /**
      * @param Collection $value
      *
      * @return array
@@ -164,7 +177,6 @@ abstract class Import extends Base
 
             'last_year_max' => $value->get('last_year_max', 0),
             'last_year_min' => $value->get('last_year_min', 0),
-            'last_year_date' => $value->get('last_year_date', null),
 
             '5ma' => $value->get('5ma', 0),
             '10ma' => $value->get('10ma', 0),

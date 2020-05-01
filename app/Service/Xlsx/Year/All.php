@@ -87,6 +87,11 @@ class All extends Xlsx
      */
     public function getData()
     {
-        return $this->getAllData($this->dir);
+        $lastYear = $this->year - 1;
+
+        return collect([
+            $this->year => $this->getAllData($this->dir, $this->name()),
+            $lastYear => $this->getAllData(['max', 'min', 'volume'], $this->name($lastYear)),
+        ]);
     }
 }

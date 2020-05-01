@@ -19,7 +19,6 @@ class Price extends Model
 
         'last_year_max' => 'double',
         'last_year_min' => 'double',
-        'last_year_date' => 'date',
 
         '5ma' => 'double',
         '10ma' => 'double',

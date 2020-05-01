@@ -27,7 +27,6 @@ class CreatePricesTable extends Migration
             $table->decimal('amplitude', 6)->comment('振幅(%)');
             $table->decimal('last_year_max', self::PRICE_TOTAL)->comment('最近一年(250天)最高價');
             $table->decimal('last_year_min', self::PRICE_TOTAL)->comment('最近一年(250天)最低價');
-            $table->date('last_year_date')->nullable()->comment('最近一年(250天)日期');
             $table->decimal('5ma', self::PRICE_TOTAL)->comment('5日均線');
             $table->decimal('10ma', self::PRICE_TOTAL)->comment('10日均線');
             $table->decimal('20ma', self::PRICE_TOTAL)->comment('20日均線');

@@ -86,15 +86,18 @@ abstract class Xlsx
     }
 
     /**
-     * @param array $name
+     * @param array $names
+     * @param string $fileName
      *
      * @return \Illuminate\Support\Collection
+     * @throws \PhpOffice\PhpSpreadsheet\Exception
+     * @throws \PhpOffice\PhpSpreadsheet\Reader\Exception
      */
-    public function getAllData(array $names)
+    public function getAllData(array $names, string $fileName)
     {
         $data = collect();
         foreach ($names as $n) {
-            $path = $this->path . '\\' . $n . '\\' . $this->name();
+            $path = $this->path . '\\' . $n . '\\' . $fileName;
 
             if ($this->isJson()) {
                 $d = $this->readJson($path);
@@ -217,13 +220,17 @@ abstract class Xlsx
      *
      * @return string
      */
-    public function name(): string
+    public function name(string $name = ''): string
     {
-        if ($this->isJson()) {
-            return $this->year . '.json';
+        if ($name == '') {
+            $name = $this->year;
         }
 
-        return $this->year . '.xlsx';
+        if ($this->isJson()) {
+            return $name . '.json';
+        }
+
+        return $name . '.xlsx';
     }
 
     /**

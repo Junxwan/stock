@@ -22,7 +22,27 @@ class Stock extends Model
     ];
 
     /**
+     * @var array
+     */
+    protected $casts = [
+        'twse_date' => 'datetime',
+        'otc_date' => 'datetime',
+    ];
+
+    /**
      * @var bool
      */
     public $timestamps = false;
+
+    /**
+     * @return mixed
+     */
+    public function pushDate()
+    {
+        if (isset($this->twse_date)) {
+            return $this->twse_date;
+        }
+
+        return $this->otc_date;
+    }
 }
