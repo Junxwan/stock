@@ -2,9 +2,6 @@
 
 /**
  * 突破月線
- *
- * 1. 今日收盤價大於月均線
- * 2. 昨日收盤價小於等於月均線
  */
 
 namespace App\Service\Tactics;
@@ -46,6 +43,11 @@ class BreakMonthMa extends Tactics
     }
 
     /**
+     * 突破月線
+     *
+     * 1. 今日收盤價大於月均線
+     * 2. 昨日收盤價小於等於月均線
+     *
      * @return array
      */
     private function ma()
@@ -53,17 +55,18 @@ class BreakMonthMa extends Tactics
         return [
             'name' => self::BREAK_MONTH_MA,
             'rules' => [
-                // 今日收盤價大於月均線
                 [
                     [
+                        // 今日收盤價大於月均線
                         'where' => 'close',
                         'operator' => '>=',
                         'value' => '20ma',
                     ],
                 ],
-                // 昨日收盤價小於等於月均線
+
                 [
                     [
+                        // 昨日收盤價小於等於月均線
                         'where' => 'close',
                         'operator' => '<',
                         'value' => '20ma',
@@ -74,6 +77,11 @@ class BreakMonthMa extends Tactics
     }
 
     /**
+     * 突破月線且投信買超
+     *
+     * 1. 突破月線
+     * 2. 投信買超大於1張
+     *
      * @return array
      */
     private function tyBuyMa()
@@ -84,6 +92,7 @@ class BreakMonthMa extends Tactics
             'rules' => [
                 [
                     [
+                        // 投信買超大於1張
                         'where' => 'trust_buy',
                         'operator' => '>=',
                         'value' => 1,
@@ -94,6 +103,11 @@ class BreakMonthMa extends Tactics
     }
 
     /**
+     * 突破月線且外資買超
+     *
+     * 1. 突破月線
+     * 2. 外資買超大於1張
+     *
      * @return array
      */
     private function foBuyMa()
@@ -104,6 +118,7 @@ class BreakMonthMa extends Tactics
             'rules' => [
                 [
                     [
+                        // 外資買超大於1張
                         'where' => 'foreign_investment_buy',
                         'operator' => '>=',
                         'value' => 1,
