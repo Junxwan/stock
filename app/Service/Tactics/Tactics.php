@@ -2,6 +2,7 @@
 
 namespace App\Service\Tactics;
 
+use Closure;
 use App\Exceptions\StockException;
 use App\Repository\OpenDateRepository;
 use App\Repository\PriceRepository;
@@ -39,6 +40,11 @@ abstract class Tactics
     protected $tacticsResultRepo;
 
     /**
+     * @var array
+     */
+    private $param = [];
+
+    /**
      * BreakMonthMa constructor.
      *
      * @param PriceRepository $priceRepo
@@ -66,15 +72,22 @@ abstract class Tactics
 
     /**
      * @param string $date
+     * @param string $type
      *
-     * @throws \App\Exceptions\StockException
+     * @throws StockException
      */
-    public function run(string $date)
+    public function run(string $date, string $type)
     {
-        if (strlen($date) == 4) {
-            $this->year($date);
+        $this->param = $this->param($type);
+
+        if (empty($this->param)) {
+            throw new \Exception('param is empty');
+        }
+
+        if (isset($this->param['tactics'])) {
+            $this->runByTactics($date, $this->param['tactics']);
         } else {
-            $this->date($date);
+            $this->runByData($date);
         }
     }
 
@@ -84,35 +97,68 @@ abstract class Tactics
      * @return array
      * @throws StockException
      */
-    protected function date(string $date)
+    private function runByData(string $date)
     {
-        $openDate = $this->openDateRepo->all()
-            ->where('date', '<=', $date)
-            ->slice(0, $this->max() + 1);
+        if (strlen($date) == 4) {
+            return $this->yearByDate($date);
+        }
 
-        return $this->doDate(
-            $date,
-            $openDate,
-            $this->priceInRange([$openDate->last()->date, $openDate->first()->date])
-        );
+        return $this->dateByDate($date);
     }
 
     /**
-     * @param string $year
+     * @param string $date
+     * @param string $tactics
      *
      * @return array
      * @throws StockException
      */
-    protected function year(string $year)
+    private function runByTactics(string $date, string $tactics)
+    {
+        if (strlen($date) == 4) {
+            //            $this->tacticsResultRepo->typeByDateRange(
+            //                $this->dateRangeByYear($date)->toArray(), $tactics
+            //            );
+        }
+
+        return $this->date($date, function ($openDate) use ($date, $tactics) {
+            $codes = $this->tacticsResultRepo->type($date, $tactics)
+                ->pluck('code')
+                ->toArray();
+
+            return $this->priceInCodes($date, $codes);
+        });
+    }
+
+    /**
+     * @param string $date
+     * @param Closure $closure
+     *
+     * @return array
+     * @throws StockException
+     */
+    private function date(string $date, Closure $closure)
     {
         $openDate = $this->openDateRepo->all()
-            ->whereBetween('date', [$year . '-01-01', $year . '-12-31'])
-            ->pluck('date');
+            ->where('date', '<=', $date)
+            ->slice(0, last(array_keys($this->param['rules'])) + 1);
 
+        return $this->doDate($date, $openDate, $closure($openDate));
+    }
+
+    /**
+     * @param string $year
+     * @param Closure $closure
+     *
+     * @return array
+     * @throws StockException
+     */
+    private function year(string $year, Closure $closure)
+    {
         $result = [];
-        foreach ($openDate as $date) {
-            $codes = $this->date($date);
-            $count = $this->tacticsResultRepo->type($date, $this->type())->count();
+        foreach ($this->dateRangeByYear($year) as $date) {
+            $codes = $closure($date);
+            $count = $this->tacticsResultRepo->type($date, $this->param['name'])->count();
 
             if ($count != count($codes)) {
                 throw new \Exception('date: ' . $date . ' result is [' . $count . ']' . ' not ' . count($codes));
@@ -125,6 +171,32 @@ abstract class Tactics
     }
 
     /**
+     * @param string $date
+     *
+     * @return array
+     * @throws StockException
+     */
+    private function dateByDate(string $date)
+    {
+        return $this->date($date, function ($openDate) {
+            return $this->priceInRange([$openDate->last()->date, $openDate->first()->date]);
+        });
+    }
+
+    /**
+     * @param string $year
+     *
+     * @return array
+     * @throws StockException
+     */
+    private function yearByDate(string $year)
+    {
+        return $this->year($year, function ($date) {
+            return $this->dateByDate($date);
+        });
+    }
+
+    /**
      * @param array $dates
      * @param Collection $openDate
      * @param string $date
@@ -132,14 +204,14 @@ abstract class Tactics
      * @return array
      * @throws StockException
      */
-    protected function doDate(string $date, Collection $openDate, Collection $prices)
+    private function doDate(string $date, Collection $openDate, Collection $prices)
     {
         $this->log('================================================');
         $this->log('date: ' . $date . ' ...');
 
         $codes = $this->runResult($openDate->pluck('date'), $prices);
 
-        if (! $this->save($codes, $date, $this->type())) {
+        if (! $this->save($codes, $date, $this->param['name'])) {
             throw new \Exception('[' . $date . '] save not ok: ' . implode(',', $codes));
         }
 
@@ -155,12 +227,11 @@ abstract class Tactics
      * @return array
      * @throws StockException
      */
-    protected function runResult(Collection $dates, Collection $prices)
+    private function runResult(Collection $dates, Collection $prices)
     {
         $result = [];
-        $param = $this->param();
         foreach ($prices->keys() as $code) {
-            if ($this->runRule($dates, $prices[$code], $param['rules'])) {
+            if ($this->runRule($dates, $prices[$code], $this->param['rules'])) {
                 $result[] = $code;
             }
         }
@@ -175,7 +246,7 @@ abstract class Tactics
      *
      * @return bool
      */
-    protected function runRule(Collection $dates, array $prices, array $ruleAry)
+    private function runRule(Collection $dates, array $prices, array $ruleAry)
     {
         foreach ($ruleAry as $i => $rules) {
             $date = $dates[$i];
@@ -189,7 +260,7 @@ abstract class Tactics
                 $result = $this->operatorForWhere(
                     $price[$rule['where']],
                     $rule['operator'],
-                    $price[$rule['value']]
+                    is_int($rule['value']) ? $rule['value'] : $price[$rule['value']]
                 );
 
                 if (! $result) {
@@ -202,21 +273,37 @@ abstract class Tactics
     }
 
     /**
-     * @param string $date
+     * @param string $type
      *
      * @return array
      */
-    public abstract function param(): array;
+    public abstract function param(string $type): array;
 
     /**
      * @param string $dates
      *
      * @return Collection
      */
-    protected function priceInRange(array $dates)
+    private function priceInRange(array $dates)
     {
         $data = [];
         foreach ($this->priceRepo->dateRange($dates) as $value) {
+            $data[$value->code][$value->date] = $value;
+        }
+
+        return collect($data);
+    }
+
+    /**
+     * @param string $date
+     * @param array $codes
+     *
+     * @return Collection
+     */
+    private function priceInCodes(string $date, array $codes)
+    {
+        $data = [];
+        foreach ($this->priceRepo->gets($date, $codes) as $value) {
             $data[$value->code][$value->date] = $value;
         }
 
@@ -229,7 +316,7 @@ abstract class Tactics
      *
      * @return bool
      */
-    protected function save(array $codes, string $date, string $type): bool
+    private function save(array $codes, string $date, string $type): bool
     {
         $exist = [];
         foreach ($this->tacticsResultRepo->type($date, $type) as $value) {
@@ -265,13 +352,25 @@ abstract class Tactics
     }
 
     /**
+     * @param string $year
+     *
+     * @return Collection
+     */
+    private function dateRangeByYear(string $year)
+    {
+        return $this->openDateRepo->all()
+            ->whereBetween('date', [$year . '-01-01', $year . '-12-31'])
+            ->pluck('date');
+    }
+
+    /**
      * @param $retrieved
      * @param $operator
      * @param $value
      *
      * @return bool
      */
-    protected function operatorForWhere($retrieved, $operator, $value)
+    private function operatorForWhere($retrieved, $operator, $value)
     {
         switch ($operator) {
             case '=':
@@ -296,19 +395,6 @@ abstract class Tactics
                 return false;
         }
     }
-
-    /**
-     * @return mixed
-     */
-    protected function max()
-    {
-        return last(array_keys($this->param()['rules']));
-    }
-
-    /**
-     * @return string
-     */
-    public abstract function type(): string;
 
     /**
      * @param string $message

@@ -10,13 +10,13 @@ class Tactics extends Command
     /**
      * @var string
      */
-    protected $signature = 'tactics:run {type} {date}';
+    protected $signature = 'tactics:run {type} {date} {tactics}';
 
     public function handle()
     {
         try {
             $tactics = app('App\Service\Tactics\\' . $this->argument('type'));
-            $tactics->run($this->argument('date'));
+            $tactics->run($this->argument('date'), $this->argument('tactics'));
         } catch (\Exception $e) {
             $this->error($e->getMessage());
             Log::error($e->getMessage());

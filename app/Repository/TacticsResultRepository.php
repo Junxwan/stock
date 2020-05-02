@@ -29,4 +29,18 @@ class TacticsResultRepository extends Repository
             ->where('type', $type)
             ->get();
     }
+
+    /**
+     * @param array $dates
+     * @param string $type
+     *
+     * @return \Illuminate\Database\Eloquent\Collection
+     */
+    public function typeByDateRange(array $dates, string $type)
+    {
+        return $this->model->newQuery()
+            ->whereIn('date', $dates)
+            ->where('type', $type)
+            ->get();
+    }
 }
