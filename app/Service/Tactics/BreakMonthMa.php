@@ -7,9 +7,7 @@
  * 2. 昨日收盤價小於等於月均線
  */
 
-namespace App\Service\Tactics\BreakMonthMa;
-
-use App\Service\Tactics\Tactics;
+namespace App\Service\Tactics;
 
 class BreakMonthMa extends Tactics
 {
