@@ -2,14 +2,23 @@
 
 namespace App\Service\Tactics;
 
+use App\Exceptions\StockException;
 use App\Repository\OpenDateRepository;
 use App\Repository\PriceRepository;
 use App\Repository\StockRepository;
+use App\Repository\TacticsResultRepository;
+use Illuminate\Console\Concerns\InteractsWithIO;
+use Illuminate\Console\OutputStyle;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Log;
+use Symfony\Component\Console\Input\ArgvInput;
+use Symfony\Component\Console\Output\ConsoleOutput;
 
 abstract class Tactics
 {
+    use InteractsWithIO;
+
     /**
      * @var PriceRepository
      */
@@ -26,9 +35,9 @@ abstract class Tactics
     protected $stockRepo;
 
     /**
-     * @var Carbon
+     * @var TacticsResultRepository
      */
-    protected $date;
+    protected $tacticsResultRepo;
 
     /**
      * BreakMonthMa constructor.
@@ -36,15 +45,24 @@ abstract class Tactics
      * @param PriceRepository $priceRepo
      * @param OpenDateRepository $openDateRepo
      * @param StockRepository $stockRepo
+     * @param TacticsResultRepository $tacticsResultRepo
+     *
+     * @throws \Illuminate\Contracts\Container\BindingResolutionException
      */
     public function __construct(
         PriceRepository $priceRepo,
         OpenDateRepository $openDateRepo,
-        StockRepository $stockRepo
+        StockRepository $stockRepo,
+        TacticsResultRepository $tacticsResultRepo
     ) {
         $this->priceRepo = $priceRepo;
         $this->openDateRepo = $openDateRepo;
         $this->stockRepo = $stockRepo;
+        $this->tacticsResultRepo = $tacticsResultRepo;
+
+        $this->output = app()->make(
+            OutputStyle::class, ['input' => new ArgvInput(), 'output' => new ConsoleOutput()]
+        );
     }
 
     /**
@@ -56,23 +74,86 @@ abstract class Tactics
      * @param string $date
      *
      * @return array
+     * @throws StockException
      */
     protected function date(string $date)
     {
-        $dates = [];
-        $param = $this->param();
-        $openDate = $this->openDateRepo->all()->where('date', '<=', $date);
-        $openDateOffset = $openDate->slice(0, 1)->keys()[0];
+        $openDate = $this->openDateRepo->all()
+            ->where('date', '<=', $date)
+            ->slice(0, $this->max() + 1);
 
-        foreach ($param['date'] as $d) {
-            $dates[] = $openDate[$openDateOffset + $d]->date;
-        }
+        return $this->doDate(
+            $date,
+            $openDate,
+            $this->priceInRange([$openDate->last()->date, $openDate->first()->date])
+        );
+    }
+
+    /**
+     * @param string $year
+     *
+     * @return array
+     * @throws StockException
+     */
+    protected function year(string $year)
+    {
+        $openDate = $this->openDateRepo->all()
+            ->whereBetween('date', [$year . '-01-01', $year . '-12-31'])
+            ->pluck('date');
 
         $result = [];
-        $prices = $this->priceInDate($dates);
-        foreach ($prices->last() as $p) {
-            if ($this->runRule($prices, $p->code, $dates, $param['rules'])) {
-                $result[] = $p->code;
+        foreach ($openDate as $date) {
+            $codes = $this->date($date);
+            $count = $this->tacticsResultRepo->type($date, $this->type())->count();
+
+            if ($count != count($codes)) {
+                throw new \Exception('date: ' . $date . ' result is [' . $count . ']' . ' not ' . count($codes));
+            }
+
+            $result[$date] = $codes;
+        }
+
+        return $result;
+    }
+
+    /**
+     * @param array $dates
+     * @param Collection $openDate
+     * @param string $date
+     *
+     * @return array
+     * @throws StockException
+     */
+    protected function doDate(string $date, Collection $openDate, Collection $prices)
+    {
+        $this->log('================================================');
+        $this->log('date: ' . $date . ' ...');
+
+        $codes = $this->runResult($openDate->pluck('date'), $prices);
+
+        if (! $this->save($codes, $date, $this->type())) {
+            throw new \Exception('[' . $date . '] save not ok: ' . implode(',', $codes));
+        }
+
+        $this->log('date result: ' . $date . ' ok');
+
+        return $codes;
+    }
+
+    /**
+     * @param Collection $dates
+     * @param Collection $prices
+     *
+     * @return array
+     * @throws StockException
+     */
+    protected function runResult(Collection $dates, Collection $prices)
+    {
+        $result = [];
+        $param = $this->param();
+        foreach ($prices->keys() as $code) {
+            if ($this->runRule($dates, $prices[$code], $param['rules'])) {
+                $result[] = $code;
             }
         }
 
@@ -80,17 +161,21 @@ abstract class Tactics
     }
 
     /**
-     * @param Collection $prices
-     * @param string $code
-     * @param array $dates
+     * @param Collection $dates
+     * @param array $prices
      * @param array $ruleAry
      *
      * @return bool
      */
-    protected function runRule(Collection $prices, string $code, array $dates, array $ruleAry)
+    protected function runRule(Collection $dates, array $prices, array $ruleAry)
     {
         foreach ($ruleAry as $i => $rules) {
-            $price = $prices[$dates[$i]][$code];
+            $date = $dates[$i];
+            if (! isset($prices[$date])) {
+                return false;
+            }
+
+            $price = $prices[$date];
 
             foreach ($rules as $rule) {
                 $result = $this->operatorForWhere(
@@ -116,18 +201,59 @@ abstract class Tactics
     public abstract function param(): array;
 
     /**
-     * @param array $dates
+     * @param string $dates
      *
-     * @return \Illuminate\Support\Collection
+     * @return Collection
      */
-    protected function priceInDate(array $dates)
+    protected function priceInRange(array $dates)
     {
         $data = [];
-        foreach ($this->priceRepo->dates($dates) as $value) {
-            $data[$value->date->toDateString()][$value->code] = $value;
+        foreach ($this->priceRepo->dateRange($dates) as $value) {
+            $data[$value->code][$value->date] = $value;
         }
 
         return collect($data);
+    }
+
+    /**
+     * @param array $code
+     * @param string $type
+     *
+     * @return bool
+     */
+    protected function save(array $codes, string $date, string $type): bool
+    {
+        $exist = [];
+        foreach ($this->tacticsResultRepo->type($date, $type) as $value) {
+            $exist[$value->code] = $value;
+        }
+
+        $inserts = [];
+        foreach ($codes as $code) {
+            if (isset($exist[$code])) {
+                continue;
+            }
+
+            $inserts[] = [
+                'code' => $code,
+                'date' => $date,
+                'type' => $type,
+            ];
+        }
+
+        $result = true;
+        $insertTotal = 0;
+        if (count($inserts) > 0) {
+            if ($this->tacticsResultRepo->batchInsert($inserts)) {
+                $insertTotal = count($inserts);
+            } else {
+                $result = false;
+            }
+        }
+
+        $this->log($date . ' total: ' . count($codes) . ' insert: ' . $insertTotal);
+
+        return $result;
     }
 
     /**
@@ -161,5 +287,27 @@ abstract class Tactics
             default:
                 return false;
         }
+    }
+
+    /**
+     * @return mixed
+     */
+    protected function max()
+    {
+        return last(array_keys($this->param()['rules']));
+    }
+
+    /**
+     * @return string
+     */
+    public abstract function type(): string;
+
+    /**
+     * @param string $message
+     */
+    protected function log(string $message)
+    {
+        $this->info($message);
+        Log::info($message);
     }
 }

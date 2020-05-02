@@ -88,16 +88,16 @@ class PriceRepository extends Repository
     }
 
     /**
-     * 某多日資料
+     * 某範圍資料
      *
      * @param array $dates
      *
      * @return \Illuminate\Database\Eloquent\Collection
      */
-    public function dates(array $dates)
+    public function dateRange(array $dates)
     {
         return $this->model->newQuery()
-            ->whereIn('date', $dates)
+            ->whereBetween('date', $dates)
             ->orderBy('code')
             ->get();
     }

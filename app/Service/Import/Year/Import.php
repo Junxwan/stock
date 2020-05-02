@@ -138,7 +138,7 @@ abstract class Import extends Base
     {
         $data = collect();
         foreach ($this->priceRepo->getYear($code, $year) as $value) {
-            $data->put($value->date->toDateString(), $value);
+            $data->put($value->date, $value);
         }
 
         return $data;

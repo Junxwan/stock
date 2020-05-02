@@ -13,9 +13,20 @@ use App\Service\Tactics\Tactics;
 
 class BreakMonthMa extends Tactics
 {
+    const Type = 'BreakMonthMa';
+
+    /**
+     * @param string $date
+     *
+     * @throws \App\Exceptions\StockException
+     */
     public function run(string $date)
     {
-        $this->date($date);
+        if (strlen($date) == 4) {
+            $this->year($date);
+        } else {
+            $this->date($date);
+        }
     }
 
     /**
@@ -24,7 +35,6 @@ class BreakMonthMa extends Tactics
     public function param(): array
     {
         return [
-            'date' => [0, 1],
             'rules' => [
                 // 今日收盤價大於月均線
                 0 => [
@@ -44,5 +54,13 @@ class BreakMonthMa extends Tactics
                 ],
             ],
         ];
+    }
+
+    /**
+     * @return string
+     */
+    public function type(): string
+    {
+        return self::Type;
     }
 }

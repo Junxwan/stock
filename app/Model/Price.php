@@ -7,8 +7,6 @@ use Illuminate\Database\Eloquent\Model;
 class Price extends Model
 {
     protected $casts = [
-        'date' => 'date',
-
         'open' => 'double',
         'close' => 'double',
         'max' => 'double',
