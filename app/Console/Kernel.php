@@ -18,6 +18,7 @@ class Kernel extends ConsoleKernel
         EPS::class,
         OutKey::class,
         Import::class,
+        Tactics::class,
         Convert::class,
         CreateOpenDate::class,
     ];

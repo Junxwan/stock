@@ -88,6 +88,21 @@ class PriceRepository extends Repository
     }
 
     /**
+     * 某多日資料
+     *
+     * @param array $dates
+     *
+     * @return \Illuminate\Database\Eloquent\Collection
+     */
+    public function dates(array $dates)
+    {
+        return $this->model->newQuery()
+            ->whereIn('date', $dates)
+            ->orderBy('code')
+            ->get();
+    }
+
+    /**
      *
      * 批次更新
      *

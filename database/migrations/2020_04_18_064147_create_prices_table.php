@@ -67,7 +67,7 @@ class CreatePricesTable extends Migration
             $table->decimal('financing_use', 6)->comment('融資使用率');
             $table->decimal('securities_ratio')->comment('券資比');
             $table->decimal('turnover', 4)->comment('週轉率(%)');
-            $table->decimal('net_worth', 4)->comment('股價淨值比');
+            $table->decimal('net_worth')->comment('股價淨值比');
             $table->decimal('main_cost', self::PRICE_TOTAL)->comment('主力成本');
             $table->decimal('foreign_investment_cost', self::PRICE_TOTAL)->comment('外資成本');
             $table->decimal('trust_cost', self::PRICE_TOTAL)->comment('投信成本');
