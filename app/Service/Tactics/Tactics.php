@@ -9,7 +9,6 @@ use App\Repository\StockRepository;
 use App\Repository\TacticsResultRepository;
 use Illuminate\Console\Concerns\InteractsWithIO;
 use Illuminate\Console\OutputStyle;
-use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
 use Symfony\Component\Console\Input\ArgvInput;
@@ -67,8 +66,17 @@ abstract class Tactics
 
     /**
      * @param string $date
+     *
+     * @throws \App\Exceptions\StockException
      */
-    public abstract function run(string $date);
+    public function run(string $date)
+    {
+        if (strlen($date) == 4) {
+            $this->year($date);
+        } else {
+            $this->date($date);
+        }
+    }
 
     /**
      * @param string $date

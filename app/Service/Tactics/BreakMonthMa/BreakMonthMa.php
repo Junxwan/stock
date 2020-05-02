@@ -16,20 +16,6 @@ class BreakMonthMa extends Tactics
     const Type = 'BreakMonthMa';
 
     /**
-     * @param string $date
-     *
-     * @throws \App\Exceptions\StockException
-     */
-    public function run(string $date)
-    {
-        if (strlen($date) == 4) {
-            $this->year($date);
-        } else {
-            $this->date($date);
-        }
-    }
-
-    /**
      * @return array
      */
     public function param(): array
