@@ -31,6 +31,7 @@ class CreatePricesTable extends Migration
             $table->decimal('10ma', self::PRICE_TOTAL)->comment('10日均線');
             $table->decimal('20ma', self::PRICE_TOTAL)->comment('20日均線');
             $table->decimal('60ma', self::PRICE_TOTAL)->comment('60日均線');
+            $table->decimal('120ma', self::PRICE_TOTAL)->comment('120日均線');
             $table->decimal('240ma', self::PRICE_TOTAL)->comment('240日均線');
             $table->decimal('5stray')->comment('股價乖離5日均線%');
             $table->decimal('10stray')->comment('股價乖離10日均線%');

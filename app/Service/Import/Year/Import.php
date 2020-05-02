@@ -27,6 +27,7 @@ abstract class Import extends Base
         '10ma' => 10,
         '20ma' => 20,
         '60ma' => 60,
+        '120ma' => 120,
         '240ma' => 240,
     ];
 
@@ -182,6 +183,7 @@ abstract class Import extends Base
             '10ma' => $value->get('10ma', 0),
             '20ma' => $value->get('20ma', 0),
             '60ma' => $value->get('60ma', 0),
+            '120ma' => $value->get('120ma', 0),
             '240ma' => $value->get('240ma', 0),
 
             '5stray' => $value->get('5stray', 0),

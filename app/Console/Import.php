@@ -10,7 +10,7 @@ class Import extends Command
     /**
      * @var string
      */
-    protected $signature = 'stock:import {type} {date} {path} {--year=} {--json=}';
+    protected $signature = 'stock:import {type} {date} {path} {--year=} {--json=} {--skip=}';
 
     public function handle()
     {

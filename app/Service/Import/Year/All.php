@@ -16,9 +16,9 @@ class All extends Import
      */
     protected function insert(Collection $all): bool
     {
-        $dates = $this->openDate->whereBetween('t', [$this->year . '0101', $this->year . '1231']);
         $data = $all->get($this->year);
         $date = $this->getDate($data);
+        $dates = $this->openDate->whereBetween('date', [$this->year . '-01-01', $date->get('open')[0]]);
         $this->checkYearDate($date, $dates);
 
         $lastYear = $this->year - 1;
