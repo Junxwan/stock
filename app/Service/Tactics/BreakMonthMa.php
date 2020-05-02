@@ -99,13 +99,15 @@ class BreakMonthMa extends Tactics
     private function foBuyMa()
     {
         return [
-            'name' => self::TRUST_BUY_BREAK_MONTH_MA,
+            'name' => self::FOREIGN_INVESTMENT_BUY_BREAK_MONTH_MA,
             'tactics' => self::BREAK_MONTH_MA,
             'rules' => [
                 [
-                    'where' => 'foreign_investment_buy',
-                    'operator' => '>=',
-                    'value' => 1,
+                    [
+                        'where' => 'foreign_investment_buy',
+                        'operator' => '>=',
+                        'value' => 1,
+                    ],
                 ],
             ],
         ];
