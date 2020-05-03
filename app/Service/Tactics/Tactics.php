@@ -49,6 +49,7 @@ class Tactics
      */
     private $type = [
         BreakMonthMa::class,
+        FallBelowMonthMa::class,
     ];
 
     /**
@@ -91,7 +92,7 @@ class Tactics
             throw new \Exception('[' . $this->param['name'] . '] name is not ' . $type);
         }
 
-        $this->info('=========================== ' . $this->param['name'] . ' =========================== ');
+        $this->log('=========================== ' . $this->param['name'] . ' =========================== ');
 
         if (isset($this->param['tactics'])) {
             $this->runByTactics($date, $this->param['tactics']);
@@ -130,7 +131,7 @@ class Tactics
                     ->pluck('code')
                     ->toArray();
 
-                return $this->priceInCodes($date, $codes);
+                return $this->priceInCodes($openDate->pluck('date')->toArray(), $codes);
             });
         };
 
@@ -152,9 +153,15 @@ class Tactics
      */
     private function date(string $date, Closure $closure)
     {
+        if (isset($this->param['maxDate'])) {
+            $len = $this->param['maxDate'] + 1;
+        } else {
+            $len = last(array_keys($this->param['rules'])) + 1;
+        }
+
         $openDate = $this->openDateRepo->all()
             ->where('date', '<=', $date)
-            ->slice(0, last(array_keys($this->param['rules'])) + 1);
+            ->slice(0, $len);
 
         return $this->doDate($date, $openDate, $closure($openDate));
     }
@@ -270,11 +277,23 @@ class Tactics
             $price = $prices[$date];
 
             foreach ($rules as $rule) {
-                $result = $this->operatorForWhere(
-                    $price[$rule['where']],
-                    $rule['operator'],
-                    is_int($rule['value']) ? $rule['value'] : $price[$rule['value']]
-                );
+                $r = $rule['value'];
+                switch (gettype($r)) {
+                    case 'int':
+                        $value = $r;
+                        break;
+                    case 'string':
+                        $value = $price[$r];
+                        break;
+                    case 'array':
+                        $value = $prices[$dates[$r['i']]][$r['v']];
+                        break;
+                    default:
+                        return false;
+                        break;
+                }
+
+                $result = $this->operatorForWhere($price[$rule['where']], $rule['operator'], $value);
 
                 if (! $result) {
                     return false;
@@ -319,15 +338,15 @@ class Tactics
     }
 
     /**
-     * @param string $date
+     * @param array $dates
      * @param array $codes
      *
      * @return Collection
      */
-    private function priceInCodes(string $date, array $codes)
+    private function priceInCodes(array $dates, array $codes)
     {
         $data = [];
-        foreach ($this->priceRepo->gets($date, $codes) as $value) {
+        foreach ($this->priceRepo->getIn($dates, $codes) as $value) {
             $data[$value->code][$value->date] = $value;
         }
 

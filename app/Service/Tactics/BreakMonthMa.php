@@ -14,6 +14,11 @@ class BreakMonthMa extends Base
     const BREAK_MONTH_MA = 'break_month_ma';
 
     /**
+     * 突破月線且月線上揚
+     */
+    const BREAK_UP_MONTH_MA = 'break_up_month_ma';
+
+    /**
      * 突破月線且投信買超
      */
     const TRUST_BUY_BREAK_MONTH_MA = 'trust_buy_break_month_ma';
@@ -24,14 +29,21 @@ class BreakMonthMa extends Base
     const FOREIGN_INVESTMENT_BUY_BREAK_MONTH_MA = 'foreign_investment_buy_break_month_ma';
 
     /**
+     * 突破月線且外資與投信買超
+     */
+    const FOREIGN_INVESTMENT_AND_TRUST_BUY_BREAK_MONTH_MA = 'foreign_investment_and_trust_buy_break_month_ma';
+
+    /**
      * @return array
      */
     public function name(): array
     {
         return [
             self::BREAK_MONTH_MA,
+            self::BREAK_UP_MONTH_MA,
             self::TRUST_BUY_BREAK_MONTH_MA,
             self::FOREIGN_INVESTMENT_BUY_BREAK_MONTH_MA,
+            self::FOREIGN_INVESTMENT_AND_TRUST_BUY_BREAK_MONTH_MA,
         ];
     }
 
@@ -42,8 +54,10 @@ class BreakMonthMa extends Base
     {
         return [
             $this->ma(),
+            $this->maUp(),
             $this->tyBuyMa(),
             $this->foBuyMa(),
+            $this->tyAndFoBuyMa(),
         ];
     }
 
@@ -75,6 +89,34 @@ class BreakMonthMa extends Base
                         'where' => 'close',
                         'operator' => '<',
                         'value' => '20ma',
+                    ],
+                ],
+            ],
+        ];
+    }
+
+    /**
+     * 1. 突破月線
+     * 2. 月線上揚
+     *
+     * @return array
+     */
+    private function maUp()
+    {
+        return [
+            'name' => self::BREAK_UP_MONTH_MA,
+            'tactics' => self::BREAK_MONTH_MA,
+            'maxDate' => 1,
+            'rules' => [
+                [
+                    [
+                        // 今日月線大於昨日月線
+                        'where' => '20ma',
+                        'operator' => '>',
+                        'value' => [
+                            'i' => 1,
+                            'v' => '20ma',
+                        ],
                     ],
                 ],
             ],
@@ -120,6 +162,33 @@ class BreakMonthMa extends Base
         return [
             'name' => self::FOREIGN_INVESTMENT_BUY_BREAK_MONTH_MA,
             'tactics' => self::BREAK_MONTH_MA,
+            'rules' => [
+                [
+                    [
+                        // 外資買超大於1張
+                        'where' => 'foreign_investment_buy',
+                        'operator' => '>',
+                        'value' => 1,
+                    ],
+                ],
+            ],
+        ];
+    }
+
+    /**
+     * 突破月線且外資與投信買超
+     *
+     * 1. 突破月線
+     * 2. 外資買超大於1張
+     * 3. 投信買超大於1張
+     *
+     * @return array
+     */
+    public function tyAndFoBuyMa()
+    {
+        return [
+            'name' => self::FOREIGN_INVESTMENT_AND_TRUST_BUY_BREAK_MONTH_MA,
+            'tactics' => self::TRUST_BUY_BREAK_MONTH_MA,
             'rules' => [
                 [
                     [
