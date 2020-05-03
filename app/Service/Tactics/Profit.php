@@ -18,7 +18,7 @@ class Profit
     use InteractsWithIO;
 
     /**
-     * 突破月線後 買隔日收盤價 再三天後賣出
+     * 買隔日收盤價 再三天後賣出
      */
     const BUY_NEXT_DAY_CLOSE_THREE_SELL = 'buy_next_day_close_three_sell';
 
@@ -43,23 +43,33 @@ class Profit
     protected $openDateRepo;
 
     /**
+     * @var TacticsProfit
+     */
+    private $tacticsProfit;
+
+    /**
      * Profit constructor.
      *
      * @param TacticsResultRepository $tacticsResultRepo
      * @param TacticsProfitRepository $tacticsProfitRepo
      * @param PriceRepository $priceRepo
      * @param OpenDateRepository $openDateRepo
+     * @param TacticsProfit $tacticsProfit
+     *
+     * @throws \Illuminate\Contracts\Container\BindingResolutionException
      */
     public function __construct(
         TacticsResultRepository $tacticsResultRepo,
         TacticsProfitRepository $tacticsProfitRepo,
         PriceRepository $priceRepo,
-        OpenDateRepository $openDateRepo
+        OpenDateRepository $openDateRepo,
+        TacticsProfit $tacticsProfit
     ) {
         $this->priceRepo = $priceRepo;
         $this->tacticsResultRepo = $tacticsResultRepo;
         $this->tacticsProfitRepo = $tacticsProfitRepo;
         $this->openDateRepo = $openDateRepo;
+        $this->tacticsProfit = $tacticsProfit;
 
         $this->output = app()->make(
             OutputStyle::class, ['input' => new ArgvInput(), 'output' => new ConsoleOutput()]
@@ -69,18 +79,33 @@ class Profit
     /**
      * @param string $date
      * @param string $tactics
-     * @param string $type
+     * @param string $profit
      */
-    public function run(string $date, string $tactics, string $type)
+    public function run(string $date, string $tactics, string $profit)
     {
-        $param = [];
-        switch ($type) {
-            case self::BUY_NEXT_DAY_CLOSE_THREE_SELL:
-                $param = $this->buyNextDayCloseThreeSell();
-                break;
+        $param = $this->tacticsProfit->param($profit);
+
+        if (empty($param)) {
+            throw new \Exception('param is empty');
         }
 
-        return $this->runProfit(collect([$date]), $tactics, $param);
+        if ($param['name'] != $profit) {
+            throw new \Exception('[' . $param['name'] . '] name is not ' . $profit);
+        }
+
+        $this->log('======================================================');
+        $this->log('tactics: ' . $tactics);
+        $this->log('profit: ' . $profit);
+
+        if (strlen($date) == 4) {
+            $openDate = $this->openDateRepo->all()
+                ->whereBetween('date', [$date . '-01-01', $date . '-12-31'])
+                ->pluck('date');
+        } else {
+            $openDate = collect([$date]);
+        }
+
+        return $this->runProfit($openDate, $tactics, $param);
     }
 
     /**
@@ -129,6 +154,7 @@ class Profit
 
                 $inserts[] = [
                     'code' => $code,
+                    'date' => $date,
                     'start_date' => $startDate,
                     'end_date' => $endDate,
                     'start_price' => $startPrice,
@@ -139,7 +165,7 @@ class Profit
                     'tactics' => $tactics,
                     'type' => $param['name'],
                     'amount' => $amount,
-                    'return' => $return,
+                    'rate_of_return' => $return,
                     'buy_fee' => $feeB,
                     'sell_fee' => $feeS,
                     'tax' => $tax,

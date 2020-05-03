@@ -16,6 +16,7 @@ class CreateTacticsProfitsTable extends Migration
     {
         Schema::create('tactics_profits', function (Blueprint $table) {
             $table->string('code', 6)->comment('代碼');
+            $table->date('date')->comment('符合策略日期');
             $table->date('start_date')->comment('進場日期');
             $table->decimal('start_price')->comment('進場價格');
             $table->date('end_date')->comment('出場日期');
@@ -26,7 +27,7 @@ class CreateTacticsProfitsTable extends Migration
             $table->string('tactics')->comment('策略選股');
             $table->string('type')->comment('策略盈虧');
             $table->integer('amount')->comment('盈虧金額');
-            $table->decimal('return')->comment('報酬率');
+            $table->decimal('rate_of_return')->comment('報酬率');
             $table->integer('buy_fee')->comment('買進手續費(卷商)');
             $table->integer('sell_fee')->comment('賣出手續費(卷商)');
             $table->integer('tax')->comment('交易稅(證交稅)');
@@ -34,6 +35,7 @@ class CreateTacticsProfitsTable extends Migration
             $table->integer('borrowing_interest')->comment('借卷費');
 
             $table->index('type');
+            $table->index('date');
             $table->foreign('code')->references('code')->on('stocks');
         });
 

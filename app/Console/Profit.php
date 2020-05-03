@@ -15,7 +15,7 @@ class Profit extends Command
     /**
      * @var string
      */
-    protected $signature = 'tactics:profit {date} {tactics} {type}';
+    protected $signature = 'tactics:profit {date} {tactics} {profit}';
 
     public function handle()
     {
@@ -23,7 +23,7 @@ class Profit extends Command
             app(Tactics::class)->run(
                 $this->argument('date'),
                 $this->argument('tactics'),
-                $this->argument('type')
+                $this->argument('profit')
             );
         } catch (\Exception $e) {
             $this->error($e->getMessage());
