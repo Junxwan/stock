@@ -94,7 +94,7 @@ class BreakMonthMa extends Tactics
                     [
                         // 投信買超大於1張
                         'where' => 'trust_buy',
-                        'operator' => '>=',
+                        'operator' => '>',
                         'value' => 1,
                     ],
                 ],
@@ -120,7 +120,7 @@ class BreakMonthMa extends Tactics
                     [
                         // 外資買超大於1張
                         'where' => 'foreign_investment_buy',
-                        'operator' => '>=',
+                        'operator' => '>',
                         'value' => 1,
                     ],
                 ],
