@@ -11,17 +11,17 @@ class BreakMonthMa extends Base
     /**
      * 突破月線
      */
-    const BREAK_MONTH_MA = 'BreakMonthMa';
+    const BREAK_MONTH_MA = 'break_month_ma';
 
     /**
      * 突破月線且投信買超
      */
-    const TRUST_BUY_BREAK_MONTH_MA = 'TrustBuyBreakMonthMa';
+    const TRUST_BUY_BREAK_MONTH_MA = 'trust_buy_break_month_ma';
 
     /**
      * 突破月線且外資買超
      */
-    const FOREIGN_INVESTMENT_BUY_BREAK_MONTH_MA = 'ForeignInvestmentBuyBreakMonthMa';
+    const FOREIGN_INVESTMENT_BUY_BREAK_MONTH_MA = 'foreign_investment_buy_break_month_ma';
 
     /**
      * @return array
