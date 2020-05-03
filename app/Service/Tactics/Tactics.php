@@ -115,18 +115,22 @@ abstract class Tactics
      */
     private function runByTactics(string $date, string $tactics)
     {
-        if (strlen($date) == 4) {
-            //            $this->tacticsResultRepo->typeByDateRange(
-            //                $this->dateRangeByYear($date)->toArray(), $tactics
-            //            );
+        $f = function ($date, $tactics) {
+            return $this->date($date, function ($openDate) use ($date, $tactics) {
+                $codes = $this->tacticsResultRepo->type($date, $tactics)
+                    ->pluck('code')
+                    ->toArray();
+
+                return $this->priceInCodes($date, $codes);
+            });
+        };
+
+        if (strlen($date) != 4) {
+            return $f($date, $tactics);
         }
 
-        return $this->date($date, function ($openDate) use ($date, $tactics) {
-            $codes = $this->tacticsResultRepo->type($date, $tactics)
-                ->pluck('code')
-                ->toArray();
-
-            return $this->priceInCodes($date, $codes);
+        return $this->year($date, function ($date) use ($f, $tactics) {
+            return $f($date, $tactics);
         });
     }
 
@@ -151,7 +155,7 @@ abstract class Tactics
      * @param Closure $closure
      *
      * @return array
-     * @throws StockException
+     * @throws \Exception
      */
     private function year(string $year, Closure $closure)
     {
