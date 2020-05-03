@@ -15,7 +15,7 @@ use Illuminate\Support\Facades\Log;
 use Symfony\Component\Console\Input\ArgvInput;
 use Symfony\Component\Console\Output\ConsoleOutput;
 
-abstract class Tactics
+class Tactics
 {
     use InteractsWithIO;
 
@@ -43,6 +43,13 @@ abstract class Tactics
      * @var array
      */
     private $param = [];
+
+    /**
+     * @var array
+     */
+    private $type = [
+        BreakMonthMa::class,
+    ];
 
     /**
      * BreakMonthMa constructor.
@@ -80,9 +87,11 @@ abstract class Tactics
     {
         $this->param = $this->param($type);
 
-        if (empty($this->param)) {
-            throw new \Exception('param is empty');
+        if ($this->param['name'] != $type) {
+            throw new \Exception('[' . $this->param['name'] . '] name is not ' . $type);
         }
+
+        $this->info('=========================== ' . $this->param['name'] . ' =========================== ');
 
         if (isset($this->param['tactics'])) {
             $this->runByTactics($date, $this->param['tactics']);
@@ -280,8 +289,19 @@ abstract class Tactics
      * @param string $type
      *
      * @return array
+     * @throws \Exception
      */
-    public abstract function param(string $type): array;
+    public function param(string $type)
+    {
+        foreach ($this->type as $class) {
+            $instance = app($class);
+            if (is_int(array_search($type, $instance->name()))) {
+                return $instance->param($type);
+            }
+        }
+
+        throw new \Exception('param is empty');
+    }
 
     /**
      * @param string $dates

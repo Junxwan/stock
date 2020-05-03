@@ -6,7 +6,7 @@
 
 namespace App\Service\Tactics;
 
-class BreakMonthMa extends Tactics
+class BreakMonthMa extends Base
 {
     /**
      * 突破月線
@@ -24,22 +24,27 @@ class BreakMonthMa extends Tactics
     const FOREIGN_INVESTMENT_BUY_BREAK_MONTH_MA = 'ForeignInvestmentBuyBreakMonthMa';
 
     /**
-     * @param string $type
-     *
      * @return array
      */
-    public function param(string $type): array
+    public function name(): array
     {
-        switch ($type) {
-            case self::BREAK_MONTH_MA:
-                return $this->ma();
-            case self::TRUST_BUY_BREAK_MONTH_MA:
-                return $this->tyBuyMa();
-            case self::FOREIGN_INVESTMENT_BUY_BREAK_MONTH_MA:
-                return $this->foBuyMa();
-            default:
-                return [];
-        }
+        return [
+            self::BREAK_MONTH_MA,
+            self::TRUST_BUY_BREAK_MONTH_MA,
+            self::FOREIGN_INVESTMENT_BUY_BREAK_MONTH_MA,
+        ];
+    }
+
+    /**
+     * @return array
+     */
+    protected function methods(): array
+    {
+        return [
+            $this->ma(),
+            $this->tyBuyMa(),
+            $this->foBuyMa(),
+        ];
     }
 
     /**
