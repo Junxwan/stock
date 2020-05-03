@@ -1,5 +1,9 @@
 <?php
 
+/**
+ * 策略分析
+ */
+
 namespace App\Console;
 
 use Illuminate\Console\Command;

@@ -1,5 +1,9 @@
 <?php
 
+/**
+ * 以年為單位建立開市日
+ */
+
 namespace App\Console;
 
 use App\Service\OpenDate;
