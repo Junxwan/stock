@@ -19,6 +19,7 @@ class Kernel extends ConsoleKernel
         OutKey::class,
         Import::class,
         Tactics::class,
+        Profit::class,
         Convert::class,
         CreateOpenDate::class,
     ];

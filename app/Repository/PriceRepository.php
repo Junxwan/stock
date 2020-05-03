@@ -60,6 +60,20 @@ class PriceRepository extends Repository
     }
 
     /**
+     * @param array $dates
+     * @param array $codes
+     *
+     * @return \Illuminate\Database\Eloquent\Collection
+     */
+    public function getIn(array $dates, array $codes)
+    {
+        return $this->model->newQuery()
+            ->whereIn('code', $codes)
+            ->whereIn('date', $dates)
+            ->get();
+    }
+
+    /**
      * @param string $year
      *
      * @return \Illuminate\Database\Eloquent\Collection
