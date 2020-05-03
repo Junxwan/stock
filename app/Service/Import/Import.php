@@ -236,4 +236,13 @@ abstract class Import
     {
         return $value == "" ? 0 : $value;
     }
+
+    /**
+     * @param string $message
+     */
+    protected function log(string $message)
+    {
+        Log::info($message);
+        $this->info($message);
+    }
 }
