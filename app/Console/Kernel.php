@@ -13,15 +13,9 @@ class Kernel extends ConsoleKernel
      * @var array
      */
     protected $commands = [
-        Result::class,
-        Key::class,
-        EPS::class,
-        OutKey::class,
         Import::class,
         Tactics::class,
-        Profit::class,
         Convert::class,
-        CreateOpenDate::class,
     ];
 
     /**

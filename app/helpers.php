@@ -1,5 +1,7 @@
 <?php
 
+use Illuminate\Support\Arr;
+
 if (! function_exists('bandwidth')) {
     /**
      * 帶寬
@@ -142,5 +144,19 @@ if (! function_exists('profit')) {
             $fees,
             $tax,
         ];
+    }
+}
+
+if (! function_exists('arrToString')) {
+    /**
+     * @param array $data
+     * @param string $key
+     * @param string $glue
+     *
+     * @return string
+     */
+    function arrToString(array $data, string $key, string $glue = ','): string
+    {
+        return implode($glue, Arr::pluck($data, $key));
     }
 }

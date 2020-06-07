@@ -9,7 +9,6 @@ namespace App\Service\Import;
 use App\Model\IndustryClassification;
 use App\Repository\IndustryClassificationRepository;
 use App\Repository\StockRepository;
-use App\Service\Arr;
 use App\Service\Xlsx\Xlsx;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
@@ -100,7 +99,7 @@ class Stock extends Import
 
         if (count($insert) > 1 && $this->repo->batchInsert($insert)) {
             $this->info('stock total: ' . $total . ' insert: ' . count($insert));
-            $this->info('stock code: ' . Arr::string($insert, 'code'));
+            $this->info('stock code: ' . arrToString($insert, 'code'));
         } else {
             $this->info('stock total: ' . $total . ' insert: 0');
         }
@@ -149,7 +148,7 @@ class Stock extends Import
 
         if ($result) {
             $this->info('industry total: ' . $total . ' insert: ' . count($industry));
-            $this->info('industry code: ' . Arr::string($industry, 'code'));
+            $this->info('industry code: ' . arrToString($industry, 'code'));
         } else {
             $this->info('industry total: ' . $total . ' insert: 0');
         }
